@@ -148,6 +148,23 @@ We especially welcome contributions in these areas:
 7. **Timing Accuracy**: Improving verse timing precision
 8. **Font Support**: Adding support for more languages and scripts
 
+## Adding a New Language or Translation
+
+Follow these steps whenever you add support for another translation/language:
+
+1. **Pick a QUL Translation**: Download the JSON file for your language from the [Quranic Universal Library translation list](https://qul.tarteel.ai/resources/translation) and place it under `data/translations/<lang-code>/`. Use the same schema as the existing files (keyed by verse like `"2:255"` with `{"t": "..."}`).
+2. **Register It in Code**: Update `src/quran_data.h`:
+   - Add the translation to `translationFiles` with a new numeric `translationId`.
+   - Map the `translationId` to its language code (e.g., `en`, `om`, `amh`) in `translationLanguages`.
+   - Point `translationFontMappings` and `translationFontFamilies` to an appropriate font (add the font to `assets/fonts/` if needed).
+3. **Localized Labels & Numbers**: Edit `data/misc/surah.json` to add the localized word for “Surah”, and add a full 1–114 mapping for your language inside `data/misc/numbers.json`.
+4. **Transliterated Names**: Create/update the following files (mirroring the structure of the existing ones):
+   - `data/surah-names/<lang-code>.json` – localized/transliterated surah names.
+   - `data/reciter-names/<lang-code>.json` – localized/transliterated reciter names (keys must match the IDs in `src/quran_data.h`).
+5. **Smoke Test**: Run the generator with `--translation <your-id>` to confirm the translation is picked up, the intro/thumbnail shows localized text, and fonts render correctly.
+
+If you miss any of the steps above, the intro card or thumbnail can fall back to English strings even though the subtitles are localized, so please double-check each file before opening a PR.
+
 ### Areas Needing Extra Care
 
 These areas require careful consideration:

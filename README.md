@@ -15,6 +15,7 @@
 - High-quality audio recitations from world-renowned reciters
 - Arabic text in Uthmanic script with word-by-word data
 - Translations in multiple languages
+- Localized surah titles, reciter names, and numerals in the translation language for intros and thumbnails
 - Dynamic animations including text growth and fade effects
 - Customizable backgrounds and visual themes
 
@@ -109,6 +110,8 @@ The tool uses a `config.json` file for default settings. You can override these 
 | `--width` | Video width | 1280 |
 | `--height` | Video height | 720 |
 | `--fps` | Frames per second | 30 |
+| `--arabic-font-size` | Override Arabic subtitle font size (px) | From config (default 100) |
+| `--translation-font-size` | Override translation subtitle font size (px) | From config (default 50) |
 | `--encoder, -e` | Encoder: `software` or `hardware` | `software` |
 | `--preset, -p` | Encoder preset: `ultrafast`, `fast`, `medium` | `fast` |
 | `--no-cache` | Disable caching | false |
@@ -118,6 +121,17 @@ The tool uses a `config.json` file for default settings. You can override these 
 | `--custom-timing` | Custom timing file (VTT or SRT, currently disabled) | - |
 
 **Note:** Gapless mode and all custom recitation options are temporarily disabled while the dataset is cleaned; running with those flags exits with `Error: Gapless mode is temporarily disabled because it's too buggy and the gapless data needs to be cleaned first.`
+
+### Localization Assets
+
+The renderer keeps the intro cards and thumbnails in sync with the chosen translation language. Language-specific resources are stored in the `data` folder:
+
+- `data/misc/surah.json` – localized label for the word “Surah”
+- `data/misc/numbers.json` – numerals for surah numbers (1–114) per language code
+- `data/surah-names/<lang>.json` – transliterated or localized surah names
+- `data/reciter-names/<lang>.json` – transliterated reciter names
+
+Each translation ID is associated with a language code in `src/quran_data.h`. When adding a translation, make sure the code has entries in all of the files above and that the translation JSON (following the [QUL format](https://qul.tarteel.ai/resources/translation)) lives under `data/translations/<lang>/`. See [CONTRIBUTING.md](CONTRIBUTING.md) for a full checklist.
 
 ## Performance
 

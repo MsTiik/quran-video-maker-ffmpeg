@@ -58,9 +58,9 @@ Generate videos with translations in multiple languages.
 - English (Sahih International)
 - Oromo (Gaali Abba Boor)
 - Basic font rendering for each language
+- Localized surah labels, names, reciter names, and numerals on intros and thumbnails for languages with assets
 
 **TODOs:**
-- Fix thumbnail generation to respect translation language
 - Add more translation languages (Urdu, French, Turkish, Indonesian, etc.)
 - Implement automatic font selection per language (single font per language)
 - Add support for Arabic only, single translation, and two-translations subtitle tracks
@@ -115,7 +115,7 @@ Automatically creates thumbnails with video metadata.
 - Create separate thumbnail generation command
 
 ### Hardware Acceleration
-**Status:** 🟡 Platform-Dependent (might be deprecated)
+**Status:** 🟡 Platform-Dependent (most likely to be deprecated)
 
 Supports both software and hardware encoders for faster rendering. This feature might be deprecated because there are a lot of complex filters applied during rendering and current benchmarks (at least on a M1 MacBook Pro) show there is no improvement and actually worse performance.
 
@@ -129,7 +129,7 @@ Supports both software and hardware encoders for faster rendering. This feature 
 - Test on Windows platforms
 
 ### Intelligent Caching
-**Status:** 🟢 Working
+**Status:** 🟢 Stable
 
 Downloads and caches audio files for reuse across multiple renders.
 

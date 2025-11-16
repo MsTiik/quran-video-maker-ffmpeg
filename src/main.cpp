@@ -31,6 +31,8 @@ int main(int argc, char* argv[]) {
         ("width", "Video width", cxxopts::value<int>())
         ("height", "Video height", cxxopts::value<int>())
         ("fps", "Frames per second", cxxopts::value<int>())
+        ("arabic-font-size", "Override Arabic font size", cxxopts::value<int>())
+        ("translation-font-size", "Override translation font size", cxxopts::value<int>())
         ("e,encoder", "Choose encoder: 'software' (default) or 'hardware'", cxxopts::value<std::string>()->default_value("software"))
         ("p,preset", "Software encoder preset for speed/quality (ultrafast, fast, medium)", cxxopts::value<std::string>()->default_value("fast"))
         ("no-cache", "Disable caching", cxxopts::value<bool>()->default_value("false"))
@@ -71,6 +73,8 @@ int main(int argc, char* argv[]) {
     if (result.count("width")) options.width = result["width"].as<int>();
     if (result.count("height")) options.height = result["height"].as<int>();
     if (result.count("fps")) options.fps = result["fps"].as<int>();
+    if (result.count("arabic-font-size")) options.arabicFontSize = result["arabic-font-size"].as<int>();
+    if (result.count("translation-font-size")) options.translationFontSize = result["translation-font-size"].as<int>();
     options.noCache = result["no-cache"].as<bool>();
     options.clearCache = result["clear-cache"].as<bool>();
     options.preset = result["preset"].as<std::string>();
@@ -191,16 +195,27 @@ AppConfig loadConfig(const std::string& path, CLIOptions& options) {
     cfg.arabicFont.size = data["arabicFont"].value("size", 100);
     cfg.arabicFont.color = data["arabicFont"].value("color", "FFFFFF");
 
-    cfg.translationFont.family = data["translationFont"].value("family", "American Captain");
-    cfg.translationFont.size = data["translationFont"].value("size", 50);
-    cfg.translationFont.color = data["translationFont"].value("color", "D3D3D3");
-    
-    // Auto-select translation font based on translation ID if not specified
-    if (!data["translationFont"].contains("file")) {
-        cfg.translationFont.file = cfg.assetFolderPath + "/" + QuranData::getTranslationFont(cfg.translationId);
+    json translationFontConfig = data.contains("translationFont") ? data["translationFont"] : json::object();
+    bool translationFontFamilyOverridden =
+        translationFontConfig.contains("family") &&
+        translationFontConfig.value("family", "") != QuranData::defaultTranslationFontFamily;
+    bool translationFontFileOverridden =
+        translationFontConfig.contains("file") &&
+        translationFontConfig.value("file", "") != QuranData::defaultTranslationFont;
+
+    if (translationFontFamilyOverridden) {
+        cfg.translationFont.family = translationFontConfig.value("family", QuranData::defaultTranslationFontFamily);
     } else {
-        // TODO: consider throwing an error instead of assuming english subtitles should be produced
-        cfg.translationFont.file = cfg.assetFolderPath + "/" + data["translationFont"].value("file", QuranData::defaultTranslationFont);
+        cfg.translationFont.family = QuranData::getTranslationFontFamily(cfg.translationId);
+    }
+    cfg.translationFont.size = translationFontConfig.value("size", 50);
+    cfg.translationFont.color = translationFontConfig.value("color", "D3D3D3");
+    
+    // Auto-select translation font based on translation ID if overridden config not provided
+    if (translationFontFileOverridden) {
+        cfg.translationFont.file = cfg.assetFolderPath + "/" + translationFontConfig.value("file", QuranData::defaultTranslationFont);
+    } else {
+        cfg.translationFont.file = cfg.assetFolderPath + "/" + QuranData::getTranslationFont(cfg.translationId);
     }
 
     // Data paths
@@ -243,6 +258,9 @@ AppConfig loadConfig(const std::string& path, CLIOptions& options) {
     if (options.translationId != -1) {
         cfg.translationId = options.translationId;
         cfg.translationFont.file = cfg.assetFolderPath + "/" + QuranData::getTranslationFont(cfg.translationId);
+        if (!translationFontFamilyOverridden) {
+            cfg.translationFont.family = QuranData::getTranslationFontFamily(cfg.translationId);
+        }
     }
     if (!options.recitationMode.empty()) {
         if (options.recitationMode == "gapless") {
@@ -256,6 +274,8 @@ AppConfig loadConfig(const std::string& path, CLIOptions& options) {
     if (options.width != -1) cfg.width = options.width;
     if (options.height != -1) cfg.height = options.height;
     if (options.fps != -1) cfg.fps = options.fps;
+    if (options.arabicFontSize != -1) cfg.arabicFont.size = options.arabicFontSize;
+    if (options.translationFontSize != -1) cfg.translationFont.size = options.translationFontSize;
     
     cfg.enableTextGrowth = options.enableTextGrowth;
 

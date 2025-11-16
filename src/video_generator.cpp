@@ -10,6 +10,7 @@
 #include <iomanip>
 #include <thread>
 #include <future>
+#include <nlohmann/json.hpp>
 #include <hb.h>
 #include <hb-ft.h>
 #include <ft2build.h>
@@ -20,6 +21,7 @@ extern "C" {
 }
 
 namespace fs = std::filesystem;
+using json = nlohmann::json;
 
 namespace {
 
@@ -44,6 +46,84 @@ namespace {
             clean_hex = clean_hex.substr(1);
         }
         return "&H" + clean_hex + "&";
+    }
+
+    json load_json_file(const fs::path& path) {
+        std::ifstream f(path);
+        if (!f.is_open()) return json();
+        json data = json::parse(f, nullptr, false);
+        if (data.is_discarded()) return json();
+        return data;
+    }
+
+    std::string get_language_code(const AppConfig& config) {
+        return QuranData::getTranslationLanguageCode(config.translationId);
+    }
+
+    std::string get_localized_surah_name(int surah, const std::string& lang_code) {
+        fs::path path = fs::path("data/surah-names") / (lang_code + ".json");
+        json data = load_json_file(path);
+        std::string key = std::to_string(surah);
+        if (data.is_object()) {
+            auto it = data.find(key);
+            if (it != data.end() && it->is_string()) {
+                return it->get<std::string>();
+            }
+        }
+        return QuranData::surahNames.at(surah);
+    }
+
+    std::string get_localized_reciter_name(int reciterId, const std::string& lang_code) {
+        fs::path path = fs::path("data/reciter-names") / (lang_code + ".json");
+        json data = load_json_file(path);
+        std::string key = std::to_string(reciterId);
+        if (data.is_object()) {
+            auto it = data.find(key);
+            if (it != data.end() && it->is_string()) {
+                return it->get<std::string>();
+            }
+        }
+        return QuranData::reciterNames.at(reciterId);
+    }
+
+    std::string get_localized_surah_label(const std::string& lang_code) {
+        json data = load_json_file("data/misc/surah.json");
+        if (data.is_object()) {
+            auto it = data.find(lang_code);
+            if (it != data.end() && it->is_string()) {
+                return it->get<std::string>();
+            }
+            auto fallback = data.find("en");
+            if (fallback != data.end() && fallback->is_string()) {
+                return fallback->get<std::string>();
+            }
+        }
+        return "Surah";
+    }
+
+    std::string get_localized_number(int value, const std::string& lang_code) {
+        json data = load_json_file("data/misc/numbers.json");
+        auto lookup_for_lang = [&](const std::string& code) -> std::string {
+            if (!data.is_object()) return "";
+            auto lang_it = data.find(code);
+            if (lang_it != data.end() && lang_it->is_object()) {
+                std::string key = std::to_string(value);
+                auto number_it = lang_it->find(key);
+                if (number_it != lang_it->end() && number_it->is_string()) {
+                    return number_it->get<std::string>();
+                }
+            }
+            return "";
+        };
+
+        std::string localized = lookup_for_lang(lang_code);
+        if (localized.empty()) {
+            localized = lookup_for_lang("en");
+        }
+        if (localized.empty()) {
+            localized = std::to_string(value);
+        }
+        return localized;
     }
 
     int adaptive_font_size_arabic(const std::string& text, int base_size) {
@@ -124,6 +204,11 @@ namespace {
         std::ofstream ass_file(ass_path);
         if (!ass_file.is_open()) throw std::runtime_error("Failed to create temporary subtitle file.");
 
+        std::string language_code = get_language_code(config);
+        std::string localized_surah_name = get_localized_surah_name(options.surah, language_code);
+        std::string localized_surah_label = get_localized_surah_label(language_code);
+        std::string localized_surah_text = localized_surah_label + " " + localized_surah_name;
+
         ass_file << "[Script Info]\nTitle: Quran Video Subtitles\nScriptType: v4.00+\n";
         ass_file << "PlayResX: " << config.width << "\nPlayResY: " << config.height << "\n\n";
 
@@ -142,15 +227,14 @@ namespace {
                 << ",Translation,,0,0,0,,{\\an5\\pos(" << config.width/2 << "," << config.height/2 << ")"
                 << "\\fs" << scaled_font_size
                 << "\\b1\\bord4\\shad3\\be2\\c&HFFD700&\\3c&H000000&"
-                << "\\fad(0," << config.introFadeOutMs << ")}Surah " 
-                << QuranData::surahNames.at(options.surah) << "\n";
+                << "\\fad(0," << config.introFadeOutMs << ")}" << localized_surah_text << "\n";
 
         ass_file << "Dialogue: 0,0:00:00.00," << format_time_ass(intro_duration)
                 << ",Translation,,0,0,0,,{\\an5\\pos(" << config.width/2 << "," << (config.height/2-1) << ")"
                 << "\\fs" << scaled_font_size
                 << "\\b1\\bord0\\shad0\\c&HFFFFFF&"
-                << "\\fad(0," << config.introFadeOutMs << ")}Surah " 
-                << QuranData::surahNames.at(options.surah) << "\n";
+                << "\\fad(0," << config.introFadeOutMs << ")}" 
+                << localized_surah_text << "\n";
 
         double cumulative_time = intro_duration + pause_after_intro_duration;
         
@@ -369,6 +453,12 @@ void VideoGenerator::generateThumbnail(const CLIOptions& options, const AppConfi
         std::string output_dir = fs::path(options.output).parent_path().string();
         std::string thumbnail_path = fs::path(output_dir) / "thumbnail.jpeg";
 
+        std::string language_code = get_language_code(config);
+        std::string localized_surah_label = get_localized_surah_label(language_code);
+        std::string localized_surah_name = get_localized_surah_name(options.surah, language_code);
+        std::string localized_reciter_name = get_localized_reciter_name(config.reciterId, language_code);
+        std::string localized_surah_number = get_localized_number(options.surah, language_code);
+
         std::vector<std::string> colors = config.thumbnailColors;
         if (colors.empty()) {
             colors = {
@@ -419,10 +509,10 @@ void VideoGenerator::generateThumbnail(const CLIOptions& options, const AppConfi
 
         ass_file << "[Events]\n";
         ass_file << "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n";
-        ass_file << "Dialogue: 0,0:00:00.00,0:00:05.00,Label,,0,0,0,,{\\an5\\pos(" << config.width/2 << "," << (config.height/2 - scaled_font_size*0.6) << ")\\fad(0," << config.introFadeOutMs << ")}Surah\n";
-        ass_file << "Dialogue: 0,0:00:00.00,0:00:05.00,Main,,0,0,0,,{\\an5\\pos(" << config.width/2 << "," << (config.height/2) << ")\\fad(0," << config.introFadeOutMs << ")}" << QuranData::surahNames.at(options.surah) << "\n";
-        ass_file << "Dialogue: 0,0:00:00.00,0:00:05.00,Reciter,,0,0,0,,{\\an5\\pos(" << config.width/2 << "," << (config.height/2 + scaled_font_size*0.6) << ")\\fad(0," << config.introFadeOutMs << ")} Sheikh " << QuranData::reciterNames.at(config.reciterId) << "\n";
-        ass_file << "Dialogue: 0,0:00:00.00,0:00:05.00,Number,,0,0,0,,{\\an" << align << "\\pos(" << number_x << ",50)\\fad(0," << config.introFadeOutMs << ")}" << options.surah << "\n";
+        ass_file << "Dialogue: 0,0:00:00.00,0:00:05.00,Label,,0,0,0,,{\\an5\\pos(" << config.width/2 << "," << (config.height/2 - scaled_font_size*0.6) << ")\\fad(0," << config.introFadeOutMs << ")}" << localized_surah_label << "\n";
+        ass_file << "Dialogue: 0,0:00:00.00,0:00:05.00,Main,,0,0,0,,{\\an5\\pos(" << config.width/2 << "," << (config.height/2) << ")\\fad(0," << config.introFadeOutMs << ")}" << localized_surah_name << "\n";
+        ass_file << "Dialogue: 0,0:00:00.00,0:00:05.00,Reciter,,0,0,0,,{\\an5\\pos(" << config.width/2 << "," << (config.height/2 + scaled_font_size*0.6) << ")\\fad(0," << config.introFadeOutMs << ")}" << localized_reciter_name << "\n";
+        ass_file << "Dialogue: 0,0:00:00.00,0:00:05.00,Number,,0,0,0,,{\\an" << align << "\\pos(" << number_x << ",50)\\fad(0," << config.introFadeOutMs << ")}" << localized_surah_number << "\n";
                 
         ass_file.close();
 

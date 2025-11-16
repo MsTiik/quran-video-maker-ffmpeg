@@ -98,6 +98,8 @@ struct CLIOptions {
     int width = -1;
     int height = -1;
     int fps = -1;
+    int arabicFontSize = -1;
+    int translationFontSize = -1;
     bool noCache = false;
     bool clearCache = false;
     std::string preset = "fast";

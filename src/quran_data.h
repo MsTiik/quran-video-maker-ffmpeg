@@ -10,9 +10,16 @@ namespace QuranData {
     };
     
     inline const std::map<int, std::string> translationFontMappings = {
-        {1, "fonts/American Captain.ttf"},   // English - Sahih International
-        {2, "fonts/American Captain.ttf"},   // Oromo
+        {1, "fonts/American Captain.ttf"},      // English - Sahih International
+        {2, "fonts/American Captain.ttf"},      // Oromo (Latin script)
+        {3, "fonts/AbyssinicaSIL-Regular.ttf"}, // Amharic
         // Add more language mappings as needed
+    };
+
+    inline const std::map<int, std::string> translationFontFamilies = {
+        {1, "American Captain"},
+        {2, "American Captain"},
+        {3, "Abyssinica SIL"}
     };
     
     // Background video themes
@@ -23,6 +30,7 @@ namespace QuranData {
     // Default assets
     inline const std::string defaultArabicFont = "fonts/UthmanicHafs_V22.ttf";
     inline const std::string defaultTranslationFont = "fonts/American Captain.ttf";
+    inline const std::string defaultTranslationFontFamily = "American Captain";
     inline const std::string defaultBackgroundVideo = "videos/themes/stars.mp4";
 
     // Mapping reciterId -> full ayah JSON path (GAPPED mode)
@@ -92,6 +100,7 @@ namespace QuranData {
         {59, "data/surah-by-surah/59_Sahl_Yasin"}
     };
 
+    // Here as fallback
     inline const std::map<int, std::string> reciterNames = {
         // Gapless mode reciters (1, 3-12, 29-59)
         {1,  "Ahmad Alnufais"},
@@ -160,15 +169,18 @@ namespace QuranData {
     // Mapping translationId -> translation JSON path
     inline const std::map<int, std::string> translationFiles = {
         {1, "data/translations/en/en-sahih-international-clean.json"},
-        {2, "data/translations/om/ghali-apapur-apaghuna-clean.json"}
+        {2, "data/translations/om/ghali-apapur-apaghuna-clean.json"},
+        {3, "data/translations/amh/am-sadiq-simple.json"}
     };
     
     // Language names for translation IDs
     inline const std::map<int, std::string> translationLanguages = {
-        {1, "english"},
-        {2, "oromo"}
+        {1, "en"},
+        {2, "om"},
+        {3, "amh"}
     };
 
+    // Here as fallback
     inline const std::map<int, std::string> surahNames = {
         {1, "Al-Fatiha"},
         {2, "Al-Baqarah"},
@@ -293,5 +305,21 @@ namespace QuranData {
             return it->second;
         }
         return defaultTranslationFont;
+    }
+
+    inline std::string getTranslationFontFamily(int translationId) {
+        auto it = translationFontFamilies.find(translationId);
+        if (it != translationFontFamilies.end()) {
+            return it->second;
+        }
+        return defaultTranslationFontFamily;
+    }
+
+    inline std::string getTranslationLanguageCode(int translationId) {
+        auto it = translationLanguages.find(translationId);
+        if (it != translationLanguages.end()) {
+            return it->second;
+        }
+        return "en";
     }
 }
