@@ -5,9 +5,65 @@
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
+#include <map>
+#include <algorithm>
 
 namespace fs = std::filesystem;
 using json = nlohmann::json;
+
+namespace {
+struct QualityProfileSettings {
+    const char* preset;
+    int crf;
+    const char* pixelFormat;
+    const char* videoBitrate;
+    const char* videoMaxRate;
+    const char* videoBufSize;
+};
+
+const std::map<std::string, QualityProfileSettings> kQualityProfiles = {
+    {"speed",    {"ultrafast", 25, "yuv420p",    "",       "",        ""}},
+    {"balanced", {"fast",      21, "yuv420p",    "4500k",  "",        ""}},
+    {"max",      {"slow",      18, "yuv420p10le","8000k",  "10000k",  "12000k"}}
+};
+
+std::string toLowerCopy(const std::string& value) {
+    std::string normalized = value;
+    std::transform(normalized.begin(), normalized.end(), normalized.begin(),
+                   [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    return normalized;
+}
+
+void applyQualityProfile(AppConfig& cfg, CLIOptions& options) {
+    auto profileName = toLowerCopy(cfg.qualityProfile);
+    auto it = kQualityProfiles.find(profileName);
+    if (it == kQualityProfiles.end()) {
+        if (!cfg.qualityProfile.empty() && cfg.qualityProfile != "balanced") {
+            std::cerr << "Warning: Unknown quality profile '" << cfg.qualityProfile << "'. Using custom values." << std::endl;
+        }
+        return;
+    }
+    const QualityProfileSettings& defaults = it->second;
+    if (!options.presetProvided && defaults.preset && *defaults.preset) {
+        options.preset = defaults.preset;
+    }
+    if (cfg.crf <= 0 && defaults.crf > 0) {
+        cfg.crf = defaults.crf;
+    }
+    if (cfg.pixelFormat.empty() && defaults.pixelFormat) {
+        cfg.pixelFormat = defaults.pixelFormat;
+    }
+    if (cfg.videoBitrate.empty() && defaults.videoBitrate) {
+        cfg.videoBitrate = defaults.videoBitrate;
+    }
+    if (cfg.videoMaxRate.empty() && defaults.videoMaxRate) {
+        cfg.videoMaxRate = defaults.videoMaxRate;
+    }
+    if (cfg.videoBufSize.empty() && defaults.videoBufSize) {
+        cfg.videoBufSize = defaults.videoBufSize;
+    }
+}
+}
 
 AppConfig loadConfig(const std::string& path, CLIOptions& options) {
     std::ifstream f(path);
@@ -103,6 +159,14 @@ AppConfig loadConfig(const std::string& path, CLIOptions& options) {
     }
     cfg.thumbnailNumberPadding = data.value("thumbnailNumberPadding", 100);
 
+    // Quality / encoder parameters
+    cfg.qualityProfile = data.value("qualityProfile", "balanced");
+    cfg.crf = data.contains("crf") ? data["crf"].get<int>() : -1;
+    cfg.pixelFormat = data.value("pixelFormat", "");
+    cfg.videoBitrate = data.value("videoBitrate", "");
+    cfg.videoMaxRate = data.value("videoMaxRate", "");
+    cfg.videoBufSize = data.value("videoBufSize", "");
+
     // CLI overrides
     if (options.reciterId != -1) cfg.reciterId = options.reciterId;
     if (options.translationId != -1) {
@@ -126,8 +190,22 @@ AppConfig loadConfig(const std::string& path, CLIOptions& options) {
     if (options.fps != -1) cfg.fps = options.fps;
     if (options.arabicFontSize != -1) cfg.arabicFont.size = options.arabicFontSize;
     if (options.translationFontSize != -1) cfg.translationFont.size = options.translationFontSize;
+    if (options.textPaddingOverride >= 0.0) {
+        cfg.textHorizontalPadding = std::clamp(options.textPaddingOverride, 0.0, 0.45);
+    }
     
     cfg.enableTextGrowth = options.enableTextGrowth;
+
+    if (!options.qualityProfile.empty()) cfg.qualityProfile = options.qualityProfile;
+    applyQualityProfile(cfg, options);
+    if (options.customCRF != -1) cfg.crf = options.customCRF;
+    if (!options.pixelFormatOverride.empty()) cfg.pixelFormat = options.pixelFormatOverride;
+    if (!options.videoBitrateOverride.empty()) cfg.videoBitrate = options.videoBitrateOverride;
+    if (!options.videoMaxRateOverride.empty()) cfg.videoMaxRate = options.videoMaxRateOverride;
+    if (!options.videoBufSizeOverride.empty()) cfg.videoBufSize = options.videoBufSizeOverride;
+
+    if (cfg.crf <= 0) cfg.crf = 23;
+    if (cfg.pixelFormat.empty()) cfg.pixelFormat = "yuv420p";
 
     return cfg;
 }

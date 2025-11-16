@@ -28,8 +28,15 @@ int main(int argc, char* argv[]) {
         ("fps", "Frames per second", cxxopts::value<int>())
         ("arabic-font-size", "Override Arabic font size", cxxopts::value<int>())
         ("translation-font-size", "Override translation font size", cxxopts::value<int>())
+        ("text-padding", "Horizontal padding fraction (0-0.45) for subtitles", cxxopts::value<double>())
         ("e,encoder", "Choose encoder: 'software' (default) or 'hardware'", cxxopts::value<std::string>()->default_value("software"))
         ("p,preset", "Software encoder preset for speed/quality (ultrafast, fast, medium)", cxxopts::value<std::string>()->default_value("fast"))
+        ("quality-profile", "Quality profile: speed | balanced | max", cxxopts::value<std::string>())
+        ("crf", "Constant Rate Factor (0-51). Lower improves quality.", cxxopts::value<int>())
+        ("pix-fmt", "Pixel format (e.g. yuv420p, yuv420p10le)", cxxopts::value<std::string>())
+        ("video-bitrate", "Target video bitrate (e.g. 6000k)", cxxopts::value<std::string>())
+        ("maxrate", "Maximum encoder bitrate (e.g. 8000k)", cxxopts::value<std::string>())
+        ("bufsize", "Encoder buffer size (e.g. 12000k)", cxxopts::value<std::string>())
         ("no-cache", "Disable caching", cxxopts::value<bool>()->default_value("false"))
         ("clear-cache", "Clear all cached data", cxxopts::value<bool>()->default_value("false"))
         ("no-growth", "Disable text growth animations", cxxopts::value<bool>()->default_value("false"))
@@ -73,8 +80,16 @@ int main(int argc, char* argv[]) {
     options.noCache = result["no-cache"].as<bool>();
     options.clearCache = result["clear-cache"].as<bool>();
     options.preset = result["preset"].as<std::string>();
+    options.presetProvided = result.count("preset");
     options.encoder = result["encoder"].as<std::string>();
     options.enableTextGrowth = !result["no-growth"].as<bool>();
+    if (result.count("text-padding")) options.textPaddingOverride = result["text-padding"].as<double>();
+    if (result.count("quality-profile")) options.qualityProfile = result["quality-profile"].as<std::string>();
+    if (result.count("crf")) options.customCRF = result["crf"].as<int>();
+    if (result.count("pix-fmt")) options.pixelFormatOverride = result["pix-fmt"].as<std::string>();
+    if (result.count("video-bitrate")) options.videoBitrateOverride = result["video-bitrate"].as<std::string>();
+    if (result.count("maxrate")) options.videoMaxRateOverride = result["maxrate"].as<std::string>();
+    if (result.count("bufsize")) options.videoBufSizeOverride = result["bufsize"].as<std::string>();
     
     // Custom recitation options
     if (result.count("custom-audio")) options.customAudioPath = result["custom-audio"].as<std::string>();

@@ -65,6 +65,14 @@ struct AppConfig {
     // Thumbnail parameters
     std::vector<std::string> thumbnailColors;
     int thumbnailNumberPadding;     // pixels from edge
+
+    // Quality / encoder parameters
+    std::string qualityProfile;
+    int crf;
+    std::string pixelFormat;
+    std::string videoBitrate;
+    std::string videoMaxRate;
+    std::string videoBufSize;
 };
 
 // Word segment timing information for gapless mode
@@ -112,6 +120,7 @@ struct CLIOptions {
     std::string preset = "fast";
     std::string encoder = "software";
     std::string recitationMode = "";  // "gapped" or "gapless"
+    bool presetProvided = false;
     
     // Custom recitation support (gapless only)
     std::string customAudioPath = "";     // Path or URL to audio file
@@ -119,4 +128,13 @@ struct CLIOptions {
     
     // Animation control
     bool enableTextGrowth = true;  // Can be overridden via CLI
+    double textPaddingOverride = -1.0;
+
+    // Quality overrides
+    std::string qualityProfile = "";
+    int customCRF = -1;
+    std::string pixelFormatOverride = "";
+    std::string videoBitrateOverride = "";
+    std::string videoMaxRateOverride = "";
+    std::string videoBufSizeOverride = "";
 };

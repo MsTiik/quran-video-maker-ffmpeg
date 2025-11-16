@@ -48,16 +48,27 @@ void VideoGenerator::generateVideo(const CLIOptions& options, const AppConfig& c
         
         filter_spec << ",ass='" << ass_filename << "':fontsdir='" << fs::absolute(config.assetFolderPath).string() + "/fonts" << "'[v]";
 
-        std::string video_codec;
+        std::ostringstream video_codec;
         if (options.encoder == "hardware") {
             #if defined(__APPLE__)
-                video_codec = "-c:v h264_videotoolbox -b:v 3500k -allow_sw 1";
+                video_codec << "-c:v h264_videotoolbox ";
+                const std::string hardwareBitrate = !config.videoBitrate.empty() ? config.videoBitrate : "3500k";
+                video_codec << "-b:v " << hardwareBitrate << " ";
+                if (!config.videoMaxRate.empty()) video_codec << "-maxrate " << config.videoMaxRate << " ";
+                if (!config.videoBufSize.empty()) video_codec << "-bufsize " << config.videoBufSize << " ";
+                video_codec << "-allow_sw 1";
                 std::cout << "Using hardware encoder: h264_videotoolbox" << std::endl;
             #else
-                video_codec = "-c:v libx264 -preset " + options.preset + " -crf 23";
+                video_codec << "-c:v libx264 -preset " << options.preset << " -crf " << config.crf << " ";
+                if (!config.videoBitrate.empty()) video_codec << "-b:v " << config.videoBitrate << " ";
+                if (!config.videoMaxRate.empty()) video_codec << "-maxrate " << config.videoMaxRate << " ";
+                if (!config.videoBufSize.empty()) video_codec << "-bufsize " << config.videoBufSize << " ";
             #endif
         } else {
-            video_codec = "-c:v libx264 -preset " + options.preset + " -crf 23";
+            video_codec << "-c:v libx264 -preset " << options.preset << " -crf " << config.crf << " ";
+            if (!config.videoBitrate.empty()) video_codec << "-b:v " << config.videoBitrate << " ";
+            if (!config.videoMaxRate.empty()) video_codec << "-maxrate " << config.videoMaxRate << " ";
+            if (!config.videoBufSize.empty()) video_codec << "-bufsize " << config.videoBufSize << " ";
             std::cout << "Using software encoder: libx264 ('" << options.preset << "')" << std::endl;
         }
 
@@ -117,9 +128,9 @@ void VideoGenerator::generateVideo(const CLIOptions& options, const AppConfig& c
                       << "-t " << totalVideoDuration << " ";
         }
 
-        final_cmd << video_codec << " "
+        final_cmd << video_codec.str() << " "
                   << "-c:a aac -b:a 128k "
-                  << "-pix_fmt yuv420p "
+                  << "-pix_fmt " << config.pixelFormat << " "
                   << "-movflags +faststart "
                   << "-threads 8 "
                   << "\"" << options.output << "\"";

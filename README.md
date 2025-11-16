@@ -103,13 +103,21 @@ Generate a video for Surah Al-Fatiha (verses 1-7):
   --translation 1
 ```
 
-> Gapless mode notice: `--mode gapless` (and custom recitation options) currently exit immediately with `Error: Gapless mode is temporarily disabled because it's too buggy and the gapless data needs to be cleaned first.` Once the gapless dataset is cleaned, this workflow will return.
+> Gapless mode notice: built-in gapless datasets are still disabled. Use `--custom-audio` + `--custom-timing` to run gapless/custom recitations.
 
 ## Configuration
 
 The tool uses a `config.json` file for default settings. You can override these via command-line options.
 
 Key rendering knobs inside `config.json` include `textHorizontalPadding` (fractional left/right padding reserved for both Arabic and translation lines), `arabicMaxWidthFraction`, and `translationMaxWidthFraction`. Together they control how aggressively long verses wrap before reaching the screen edge.
+
+The `qualityProfile` block governs encoder defaults (preset, CRF, pixel format, bitrate). Three built-in profiles are available:
+
+- `speed` – ultrafast preview renders with higher CRF.
+- `balanced` – default “fast” preset with moderate CRF (~21) and 4.5Mbps target bitrate.
+- `max` – slow preset, CRF ~18, 10-bit output, and higher bitrates suitable for archival uploads.
+
+You can override any individual quality parameter via CLI (`--quality-profile`, `--crf`, `--pix-fmt`, `--video-bitrate`, `--maxrate`, `--bufsize`).
 
 ### Command-Line Options
 
@@ -125,7 +133,13 @@ Key rendering knobs inside `config.json` include `textHorizontalPadding` (fracti
 | `--arabic-font-size` | Override Arabic subtitle font size (px) | From config (default 100) |
 | `--translation-font-size` | Override translation subtitle font size (px) | From config (default 50) |
 | `--encoder, -e` | Encoder: `software` or `hardware` | `software` |
-| `--preset, -p` | Encoder preset: `ultrafast`, `fast`, `medium` | `fast` |
+| `--preset, -p` | Software encoder preset for speed/quality | `fast` |
+| `--quality-profile` | Quality profile: `speed`, `balanced`, `max` | `balanced` |
+| `--crf` | Force CRF value (0–51). Lower = higher quality | From profile/config |
+| `--pix-fmt` | Pixel format (e.g. `yuv420p10le`) | From profile/config |
+| `--video-bitrate` | Target video bitrate (e.g. `6000k`) | From profile/config |
+| `--maxrate` | Maximum encoder bitrate (e.g. `8000k`) | From profile/config |
+| `--bufsize` | Encoder buffer size (e.g. `12000k`) | From profile/config |
 | `--no-cache` | Disable caching | false |
 | `--clear-cache` | Clear all cached data | false |
 | `--no-growth` | Disable text growth animations | false |
@@ -133,7 +147,7 @@ Key rendering knobs inside `config.json` include `textHorizontalPadding` (fracti
 | `--custom-timing` | Custom timing file (VTT or SRT, required with custom audio) | - |
 | `--text-padding` | Override horizontal padding fraction (0-0.45) applied to both languages | From config (default 0.05) |
 
-**Note:** When using custom audio & timing, the renderer trims the requested range, inserts a Bismillah clip, and re-bases the verse timings so your clip can start at any ayah.
+**Note:** When using custom audio & timing, the renderer trims the requested range, inserts a Bismillah clip, and re-bases the verse timings so your clip can start at any ayah. Built-in gapless data is still disabled for now, so gapless renders require `--custom-audio` + `--custom-timing`.
 
 ### Localization Assets
 
