@@ -58,6 +58,8 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
+    const std::string gaplessDisabledError = "Error: Gapless mode is temporarily disabled because it's too buggy and the gapless data needs to be cleaned first.";
+
     CLIOptions options;
     options.surah = result["surah"].as<int>();
     options.from = result["from"].as<int>();
@@ -93,6 +95,11 @@ int main(int argc, char* argv[]) {
             return 1;
         }
     }
+
+    if (options.recitationMode == "gapless") {
+        std::cerr << gaplessDisabledError << std::endl;
+        return 1;
+    }
     
     if (result.count("output")) {
         options.output = result["output"].as<std::string>();
@@ -113,6 +120,11 @@ int main(int argc, char* argv[]) {
         }
         
         AppConfig config = loadConfig(options.configPath, options);
+
+        if (config.recitationMode == RecitationMode::GAPLESS) {
+            std::cerr << gaplessDisabledError << std::endl;
+            return 1;
+        }
         
         // Override background theme if specified
         if (result.count("bg-theme")) {

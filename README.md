@@ -18,7 +18,7 @@
 - Dynamic animations including text growth and fade effects
 - Customizable backgrounds and visual themes
 
-The tool supports both gapped mode (ayah-by-ayah with pauses) and gapless mode (continuous surah recitation).
+The tool currently only supports gapped mode (ayah-by-ayah with pauses). Gapless mode is temporarily disabled because it's too buggy and the gapless data needs to be cleaned first.
 
 ## Prerequisites
 
@@ -92,15 +92,7 @@ Generate a video for Surah Al-Fatiha (verses 1-7):
   --translation 1
 ```
 
-Generate a continuous recitation (gapless mode and ultrafast):
-
-```bash
-./build/quran-video-maker 23 1 118 \
-  --mode gapless \
-  --reciter 8 \
-  --translation 1 \
-  --preset ultrafast
-```
+> Gapless mode notice: `--mode gapless` (and custom recitation options) currently exit immediately with `Error: Gapless mode is temporarily disabled because it's too buggy and the gapless data needs to be cleaned first.` Once the gapless dataset is cleaned, this workflow will return.
 
 ## Configuration
 
@@ -112,7 +104,7 @@ The tool uses a `config.json` file for default settings. You can override these 
 |--------|-------------|---------|
 | `--reciter, -r` | Reciter ID (see src/quran_data.h) | From config |
 | `--translation, -t` | Translation ID | From config |
-| `--mode, -m` | Recitation mode: `gapped` or `gapless` | `gapped` |
+| `--mode, -m` | Recitation mode: `gapped` (active) or `gapless` (temporarily disabled pending data cleanup) | `gapped` |
 | `--output, -o` | Output filename | `out/surah-X_Y-Z.mp4` |
 | `--width` | Video width | 1280 |
 | `--height` | Video height | 720 |
@@ -122,10 +114,10 @@ The tool uses a `config.json` file for default settings. You can override these 
 | `--no-cache` | Disable caching | false |
 | `--clear-cache` | Clear all cached data | false |
 | `--no-growth` | Disable text growth animations | false |
-| `--custom-audio` | Custom audio file path or URL (gapless only) | - |
-| `--custom-timing` | Custom timing file (VTT or SRT) | - |
+| `--custom-audio` | Custom audio file path or URL (gapless only, currently disabled) | - |
+| `--custom-timing` | Custom timing file (VTT or SRT, currently disabled) | - |
 
-**Note:** Custom recitation support and gapless mode are currently buggy and in active development.
+**Note:** Gapless mode and all custom recitation options are temporarily disabled while the dataset is cleaned; running with those flags exits with `Error: Gapless mode is temporarily disabled because it's too buggy and the gapless data needs to be cleaned first.`
 
 ## Performance
 
