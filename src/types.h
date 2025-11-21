@@ -23,6 +23,7 @@ struct AppConfig {
     // Content selection
     int reciterId;
     int translationId;
+    bool translationIsRtl;
     RecitationMode recitationMode;  // gapped vs gapless
     
     // Font configuration

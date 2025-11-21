@@ -90,3 +90,26 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 7.0)
     target_link_libraries(quran-video-maker PRIVATE stdc++fs)
 endif()
+
+# Installation rules
+include(GNUInstallDirs)
+
+install(TARGETS quran-video-maker
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+
+install(FILES config.json
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/quran-video-maker
+)
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/data.tar")
+    install(FILES data.tar
+        DESTINATION ${CMAKE_INSTALL_DATADIR}/quran-video-maker
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/assets")
+    install(DIRECTORY assets
+        DESTINATION ${CMAKE_INSTALL_DATADIR}/quran-video-maker
+    )
+endif()

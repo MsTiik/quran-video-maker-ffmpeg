@@ -106,6 +106,7 @@ AppConfig loadConfig(const std::string& path, CLIOptions& options) {
     // Content selection
     cfg.reciterId = data.value("reciterId", 7);
     cfg.translationId = data.value("translationId", 1);
+    cfg.translationIsRtl = data.value("translationIsRtl", false);
     
     // Recitation mode
     std::string modeStr = data.value("recitationMode", "gapped");

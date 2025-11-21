@@ -3,6 +3,9 @@
 #include <filesystem>
 #include <fstream>
 #include <nlohmann/json.hpp>
+#include <algorithm>
+#include <sstream>
+#include <vector>
 
 namespace fs = std::filesystem;
 using json = nlohmann::json;
@@ -87,6 +90,25 @@ std::string getLocalizedNumber(int value, const std::string& lang_code) {
         localized = std::to_string(value);
     }
     return localized;
+}
+
+std::string reverseWords(const std::string& text) {
+    std::istringstream iss(text);
+    std::vector<std::string> words;
+    std::string word;
+    while (iss >> word) {
+        words.push_back(word);
+    }
+    if (words.empty()) return text;
+    std::reverse(words.begin(), words.end());
+    std::string result;
+    for (size_t i = 0; i < words.size(); ++i) {
+        result += words[i];
+        if (i < words.size() - 1) {
+            result += " ";
+        }
+    }
+    return result;
 }
 
 } // namespace LocalizationUtils
