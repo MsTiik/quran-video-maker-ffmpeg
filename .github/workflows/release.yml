@@ -111,7 +111,7 @@ jobs:
 
     - name: Update Homebrew formula
       run: |
-        FORM="homebrew/Formula/qvm-ffmpeg.rb"
+        FORM="Formula/qvm-ffmpeg.rb"
         URL="https://github.com/ashaltu/quran-video-maker-ffmpeg/releases/download/${{ github.event.inputs.version }}/qvm-ffmpeg-${{ github.event.inputs.version }}.tar.gz"
 
         sed -i.bak \
