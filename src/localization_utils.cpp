@@ -157,7 +157,23 @@ std::string reverseWords(const std::string& text) {
     
     std::string result;
     for (size_t i = 0; i < words.size(); ++i) {
-        result += words[i];
+        // Mirror characters for RTL
+        std::string& w = words[i];
+        for (char& c : w) {
+            switch(c) {
+                case '(': c = ')'; break;
+                case ')': c = '('; break;
+                case '[': c = ']'; break;
+                case ']': c = '['; break;
+                case '{': c = '}'; break;
+                case '}': c = '{'; break;
+                case '<': c = '>'; break;
+                case '>': c = '<'; break;
+                default: break;
+            }
+        }
+
+        result += w;
         if (i < words.size() - 1) {
             result += " ";
         }
