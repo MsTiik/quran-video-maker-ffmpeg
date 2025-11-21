@@ -46,3 +46,4 @@ out/
 data/
 .vscode
 dump_*
+assets/custom_audio_test/*.wav
