@@ -108,6 +108,12 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/data.tar")
     )
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/data")
+    install(DIRECTORY data
+        DESTINATION ${CMAKE_INSTALL_DATADIR}/quran-video-maker
+    )
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/assets")
     install(DIRECTORY assets
         DESTINATION ${CMAKE_INSTALL_DATADIR}/quran-video-maker
