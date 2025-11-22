@@ -127,13 +127,13 @@ jobs:
     - name: Create release tarball (includes data/)
       run: |
         mkdir release-src
-        git archive --format=tar --prefix=qvm-ffmpeg-${{ github.event.inputs.version }}/ HEAD | tar -xf - -C release-src
-        cp -r data release-src/qvm-ffmpeg-${{ github.event.inputs.version }}/
-        tar -czf qvm-ffmpeg-${{ github.event.inputs.version }}.tar.gz -C release-src qvm-ffmpeg-${{ github.event.inputs.version }}
+        git archive --format=tar --prefix=qvm-${{ github.event.inputs.version }}/ HEAD | tar -xf - -C release-src
+        cp -r data release-src/qvm-${{ github.event.inputs.version }}/
+        tar -czf qvm-${{ github.event.inputs.version }}.tar.gz -C release-src qvm-${{ github.event.inputs.version }}
 
     - name: Compute SHA256
       id: sha
-      run: echo "sha256=$(shasum -a 256 qvm-ffmpeg-${{ github.event.inputs.version }}.tar.gz | awk '{print $1}')" >> $GITHUB_OUTPUT
+      run: echo "sha256=$(shasum -a 256 qvm-${{ github.event.inputs.version }}.tar.gz | awk '{print $1}')" >> $GITHUB_OUTPUT
 
     - name: Create Git tag
       run: |
@@ -146,7 +146,7 @@ jobs:
       uses: softprops/action-gh-release@v2
       with:
         tag_name: ${{ github.event.inputs.version }}
-        files: qvm-ffmpeg-${{ github.event.inputs.version }}.tar.gz
+        files: qvm-${{ github.event.inputs.version }}.tar.gz
 
   update-homebrew-tap:
     needs: release
@@ -163,17 +163,17 @@ jobs:
 
     - name: Download release tarball to compute SHA256
       run: |
-        curl -L -o qvm-ffmpeg-${{ github.event.inputs.version }}.tar.gz \
-          https://github.com/ashaltu/quran-video-maker-ffmpeg/releases/download/${{ github.event.inputs.version }}/qvm-ffmpeg-${{ github.event.inputs.version }}.tar.gz
+        curl -L -o qvm-${{ github.event.inputs.version }}.tar.gz \
+          https://github.com/ashaltu/quran-video-maker-ffmpeg/releases/download/${{ github.event.inputs.version }}/qvm-${{ github.event.inputs.version }}.tar.gz
 
     - name: Compute SHA256
       id: sha
-      run: echo "sha256=$(shasum -a 256 qvm-ffmpeg-${{ github.event.inputs.version }}.tar.gz | awk '{print $1}')" >> $GITHUB_OUTPUT
+      run: echo "sha256=$(shasum -a 256 qvm-${{ github.event.inputs.version }}.tar.gz | awk '{print $1}')" >> $GITHUB_OUTPUT
 
     - name: Update Homebrew formula
       run: |
         FORMULA="Formula/qvm.rb"
-        URL="https://github.com/ashaltu/quran-video-maker-ffmpeg/releases/download/${{ github.event.inputs.version }}/qvm-ffmpeg-${{ github.event.inputs.version }}.tar.gz"
+        URL="https://github.com/ashaltu/quran-video-maker-ffmpeg/releases/download/${{ github.event.inputs.version }}/qvm-${{ github.event.inputs.version }}.tar.gz"
 
         sed -i.bak \
           -e "s|url \".*\"|url \"${URL}\"|" \
