@@ -28,14 +28,6 @@ jobs:
           libavutil-dev libswscale-dev \
           libfreetype6-dev libharfbuzz-dev
 
-    - name: Cache CMake build and dependencies
-      uses: actions/cache@v4
-      with:
-        path: build
-        key: ${{ runner.os }}-cmake-${{ hashFiles('**/CMakeLists.txt', '**/*.cpp', '**/*.h') }}
-        restore-keys: |
-          ${{ runner.os }}-cmake-
-
     - name: Configure CMake
       run: |
         cmake -B $BUILD_DIR \
@@ -66,14 +58,6 @@ jobs:
       run: |
         brew update
         brew install ffmpeg freetype harfbuzz
-
-    - name: Cache CMake build and dependencies
-      uses: actions/cache@v4
-      with:
-        path: build
-        key: ${{ runner.os }}-cmake-${{ hashFiles('**/CMakeLists.txt', '**/*.cpp', '**/*.h') }}
-        restore-keys: |
-          ${{ runner.os }}-cmake-
 
     - name: Export FFmpeg pkgconfig paths (macOS)
       run: |
