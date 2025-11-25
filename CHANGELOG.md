@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. This project follows [Semantic Versioning](https://semver.org) and takes inspiration from [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.1.1] - 2025-11-25
+### Changed
+- Replaced Git LFS with a direct download of test data from R2 storage bucket; docs/workflows updated accordingly and zipped data handling removed.
+- Enabled built-in RTL handling for subtitles, removing manual reshaping hacks and simplifying text layout code paths.
+- Refined config path resolution for clearer override behavior.
+- Strengthened CI by adding ffmpeg installation plus a smoke render that checks both the video and generated thumbnail after unit tests.
+- Clarified installation instructions in README for manual setups.
+
 ## [0.1.0] - 2025-11-22
 ### Added
 - First public release of the `quran-video-maker-ffmpeg` CLI for producing Quran verse videos with synchronized Arabic text, translations, and recitations.
