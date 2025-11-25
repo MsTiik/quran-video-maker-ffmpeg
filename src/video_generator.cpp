@@ -323,13 +323,6 @@ void VideoGenerator::generateThumbnail(const CLIOptions& options, const AppConfi
         std::string localized_reciter_name = LocalizationUtils::getLocalizedReciterName(config.reciterId, language_code);
         std::string localized_surah_number = LocalizationUtils::getLocalizedNumber(options.surah, language_code);
 
-        if (config.translationIsRtl) {
-            localized_surah_label = LocalizationUtils::reverseWords(localized_surah_label);
-            localized_surah_name = LocalizationUtils::reverseWords(localized_surah_name);
-            localized_reciter_name = LocalizationUtils::reverseWords(localized_reciter_name);
-            localized_surah_number = LocalizationUtils::reverseWords(localized_surah_number);
-        }
-
         auto with_fallback = [&](const std::string& text) {
             return SubtitleBuilder::applyLatinFontFallback(
                 text,
@@ -381,13 +374,13 @@ void VideoGenerator::generateThumbnail(const CLIOptions& options, const AppConfi
         ass_file << "[V4+ Styles]\n";
         ass_file << "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\n";
         ass_file << "Style: Label," << config.translationFont.family << "," << label_size 
-                << "," << pick_color() << ",&H000000FF&, &H003333&, &H00000000&,1,0,0,0,100,100,0,0,1,3,1,3,10,10,10,1\n";
+                << "," << pick_color() << ",&H000000FF&, &H003333&, &H00000000&,1,0,0,0,100,100,0,0,1,3,1,3,10,10,10,-1\n";
         ass_file << "Style: Main," << config.translationFont.family << "," << scaled_font_size 
-                << "," << pick_color() << ",&H000000FF&, &H000000&, &H00000000&,1,0,0,0,100,100,0,0,1,5,3,5,10,10,10,1\n";
+                << "," << pick_color() << ",&H000000FF&, &H000000&, &H00000000&,1,0,0,0,100,100,0,0,1,5,3,5,10,10,10,-1\n";
         ass_file << "Style: Reciter," << config.translationFont.family << "," << reciter_size 
-                << "," << pick_color() << ",&H000000FF&, &H003333&, &H00000000&,1,0,0,0,100,100,0,0,1,3,1,3,10,10,10,1\n";
+                << "," << pick_color() << ",&H000000FF&, &H003333&, &H00000000&,1,0,0,0,100,100,0,0,1,3,1,3,10,10,10,-1\n";
         ass_file << "Style: Number," << config.translationFont.family << "," << number_size 
-                << "," << number_color << ",&H000000FF&, &H003333&, &H00000000&,1,0,0,0,100,100,0,0,1,5,3,5,10,10,10,1\n\n";
+                << "," << number_color << ",&H000000FF&, &H003333&, &H00000000&,1,0,0,0,100,100,0,0,1,5,3,5,10,10,10,-1\n\n";
 
         ass_file << "[Events]\n";
         ass_file << "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n";

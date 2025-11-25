@@ -111,10 +111,6 @@ std::string buildAssFile(const AppConfig& config,
     std::string localized_surah_label = LocalizationUtils::getLocalizedSurahLabel(language_code);
     std::string localized_surah_text = localized_surah_label + " " + localized_surah_name;
 
-    if (config.translationIsRtl) {
-        localized_surah_text = LocalizationUtils::reverseWords(localized_surah_text);
-    }
-
     std::string localized_surah_text_render =
         applyLatinFontFallback(localized_surah_text,
                                config.translationFallbackFontFamily,
@@ -129,8 +125,8 @@ std::string buildAssFile(const AppConfig& config,
 
     ass_file << "[V4+ Styles]\n";
     ass_file << "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\n";
-    ass_file << "Style: Arabic," << config.arabicFont.family << "," << config.arabicFont.size << "," << format_ass_color(config.arabicFont.color) << ",&H000000FF,&H00000000,&H99000000,0,0,0,0,100,100,0,0,1,1,1,5," << styleMargin << "," << styleMargin << "," << config.arabicFont.size * 1.5 << ",1\n";
-    ass_file << "Style: Translation," << config.translationFont.family << "," << config.translationFont.size << "," << format_ass_color(config.translationFont.color) << ",&H000000FF,&H00000000,&H99000000,0,0,0,0,100,100,0,0,1,1,1,5," << styleMargin << "," << styleMargin << "," << config.height / 2 + config.translationFont.size << ",1\n\n";
+    ass_file << "Style: Arabic," << config.arabicFont.family << "," << config.arabicFont.size << "," << format_ass_color(config.arabicFont.color) << ",&H000000FF,&H00000000,&H99000000,0,0,0,0,100,100,0,0,1,1,1,5," << styleMargin << "," << styleMargin << "," << config.arabicFont.size * 1.5 << ",-1\n";
+    ass_file << "Style: Translation," << config.translationFont.family << "," << config.translationFont.size << "," << format_ass_color(config.translationFont.color) << ",&H000000FF,&H00000000,&H99000000,0,0,0,0,100,100,0,0,1,1,1,5," << styleMargin << "," << styleMargin << "," << config.height / 2 + config.translationFont.size << ",-1\n\n";
     ass_file << "[Events]\n";
     ass_file << "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n";
 
@@ -146,10 +142,6 @@ std::string buildAssFile(const AppConfig& config,
 
     std::string range_text = LocalizationUtils::getLocalizedNumber(options.surah, language_code) +
                              " • " + std::to_string(options.from) + "-" + std::to_string(options.to);
-    
-    if (config.translationIsRtl) {
-        range_text = LocalizationUtils::reverseWords(range_text);
-    }
     
     range_text = applyLatinFontFallback(range_text,
                                         config.translationFallbackFontFamily,

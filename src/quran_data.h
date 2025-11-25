@@ -31,6 +31,22 @@ namespace QuranData {
         {3, false}, // Amharic
         {4, true}   // Urdu
     };
+
+        // Language names for translation IDs
+    inline const std::map<int, std::string> translationLanguages = {
+        {1, "en"},
+        {2, "om"},
+        {3, "amh"},
+        {4, "urd"}
+    };
+    
+    // Mapping translationId -> translation JSON path
+    inline const std::map<int, std::string> translationFiles = {
+        {1, "data/translations/en/en-sahih-international-clean.json"},
+        {2, "data/translations/om/ghali-apapur-apaghuna-clean.json"},
+        {3, "data/translations/amh/am-sadiq-simple.json"},
+        {4, "data/translations/urd/ur-fatah-muhammad-jalandhari-simple.json"}
+    };
     
     // Background video themes
     inline const std::map<std::string, std::string> backgroundThemes = {
@@ -174,22 +190,6 @@ namespace QuranData {
         {26, "Abdul Basit Abdul Samad"},
         {27, "Abu Bakr al-Shatri"},
         {28, "Saad al-Ghamdi"}
-    };
-
-    // Mapping translationId -> translation JSON path
-    inline const std::map<int, std::string> translationFiles = {
-        {1, "data/translations/en/en-sahih-international-clean.json"},
-        {2, "data/translations/om/ghali-apapur-apaghuna-clean.json"},
-        {3, "data/translations/amh/am-sadiq-simple.json"},
-        {4, "data/translations/urd/ur-fatah-muhammad-jalandhari-simple.json"}
-    };
-    
-    // Language names for translation IDs
-    inline const std::map<int, std::string> translationLanguages = {
-        {1, "en"},
-        {2, "om"},
-        {3, "amh"},
-        {4, "urd"}
     };
 
     // Here as fallback
