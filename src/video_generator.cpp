@@ -201,7 +201,7 @@ void VideoGenerator::generateVideo(const CLIOptions& options, const AppConfig& c
         double total_duration = intro_duration + pause_after_intro_duration + verses_duration;
 
         std::stringstream filter_spec;
-        filter_spec << "[0:v]loop=loop=-1:size=1:start=0,setpts=N/(FRAME_RATE*TB),scale=" << config.width << ":" << config.height;
+        filter_spec << "[0:v]setpts=PTS-STARTPTS,scale=" << config.width << ":" << config.height;
         
         size_t at_pos = config.overlayColor.find('@');
         bool apply_overlay = true;
@@ -309,7 +309,7 @@ void VideoGenerator::generateVideo(const CLIOptions& options, const AppConfig& c
             total_duration = totalVideoDuration;
             
             final_cmd
-                      << "-i \"" << to_ffmpeg_path(config.assetBgVideo) << "\" "
+                      << "-stream_loop -1 -i \"" << to_ffmpeg_path(config.assetBgVideo) << "\" "
                       << "-itsoffset " << (intro_duration + pause_after_intro_duration) << " "
                       << "-f concat -safe 0 -i \"" << to_ffmpeg_path(concat_file_path) << "\" "
                       << "-filter_complex \"" << filter_spec.str() << "\" "
