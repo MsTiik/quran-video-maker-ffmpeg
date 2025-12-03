@@ -48,21 +48,42 @@ std::vector<VideoSegment> Manager::collectVideoSegments(double targetDuration) {
         config_.videoSelection.seed
     );
     
-    // Get all available themes for the verse range
-    auto availableThemes = selector.getThemesForVerses(
+    // Get verse range segments with time allocations
+    auto verseRangeSegments = selector.getVerseRangeSegments(
         options_.surah, 
         options_.from, 
         options_.to
     );
     
-    if (availableThemes.empty()) {
-        throw std::runtime_error("No themes available for the specified verse range");
+    if (verseRangeSegments.empty()) {
+        throw std::runtime_error("No verse range segments found for the specified range");
     }
     
-    std::cout << "  Available themes: ";
-    for (size_t i = 0; i < availableThemes.size(); ++i) {
-        if (i > 0) std::cout << ", ";
-        std::cout << availableThemes[i];
+    // Log the verse range segments
+    std::cout << "  Verse range segments:" << std::endl;
+    for (const auto& seg : verseRangeSegments) {
+        std::cout << "    " << seg.rangeKey << " (verses " << seg.startVerse << "-" << seg.endVerse 
+                  << ", time " << (seg.startTimeFraction * 100) << "%-" << (seg.endTimeFraction * 100) << "%)"
+                  << " themes: [";
+        for (size_t i = 0; i < seg.themes.size(); ++i) {
+            if (i > 0) std::cout << ", ";
+            std::cout << seg.themes[i];
+        }
+        std::cout << "]" << std::endl;
+    }
+    
+    // Collect all unique themes across all ranges
+    std::set<std::string> allThemes;
+    for (const auto& seg : verseRangeSegments) {
+        allThemes.insert(seg.themes.begin(), seg.themes.end());
+    }
+    
+    std::cout << "  All themes: ";
+    bool first = true;
+    for (const auto& theme : allThemes) {
+        if (!first) std::cout << ", ";
+        std::cout << theme;
+        first = false;
     }
     std::cout << std::endl;
     
@@ -76,11 +97,9 @@ std::vector<VideoSegment> Manager::collectVideoSegments(double targetDuration) {
     };
     R2::Client r2Client(r2Config);
     
-    // Keep track of available videos per theme
-    std::map<std::string, std::vector<std::string>> themeVideosCache;
-    
     // Pre-fetch all available videos for all themes
-    for (const auto& theme : availableThemes) {
+    std::map<std::string, std::vector<std::string>> themeVideosCache;
+    for (const auto& theme : allThemes) {
         try {
             themeVideosCache[theme] = r2Client.listVideosInTheme(theme);
             if (themeVideosCache[theme].empty()) {
@@ -88,38 +107,32 @@ std::vector<VideoSegment> Manager::collectVideoSegments(double targetDuration) {
             }
         } catch (const std::exception& e) {
             std::cerr << "  Error listing videos for theme '" << theme << "': " << e.what() << std::endl;
+            themeVideosCache[theme] = {};  // Empty list
         }
-    }
-    
-    // Remove themes with no videos
-    auto it = availableThemes.begin();
-    while (it != availableThemes.end()) {
-        if (themeVideosCache[*it].empty()) {
-            it = availableThemes.erase(it);
-        } else {
-            ++it;
-        }
-    }
-    
-    if (availableThemes.empty()) {
-        throw std::runtime_error("No themes with available videos found");
     }
     
     // Collect segments until we meet or exceed the target duration
     int segmentCount = 0;
-    std::string verseRange = std::to_string(options_.surah) + ":" + 
-                             std::to_string(options_.from) + "-" + 
-                             std::to_string(options_.to);
     
     while (totalDuration < targetDuration) {
         segmentCount++;
         
-        // Select a theme (ensuring no repeats until exhausted)
+        // Calculate current time fraction
+        double timeFraction = totalDuration / targetDuration;
+        
+        // Get the appropriate verse range segment for this time position
+        const auto* currentRange = selector.getRangeForTimePosition(verseRangeSegments, timeFraction);
+        if (!currentRange) {
+            std::cerr << "  Error: No range found for time fraction " << timeFraction << std::endl;
+            break;
+        }
+        
+        // Select a theme from this range's themes
         std::string selectedTheme;
         try {
-            selectedTheme = selector.selectTheme(
-                availableThemes, 
-                verseRange, 
+            selectedTheme = selector.selectThemeForRange(
+                *currentRange,
+                themeVideosCache,
                 selectionState_
             );
         } catch (const std::exception& e) {
@@ -129,12 +142,12 @@ std::vector<VideoSegment> Manager::collectVideoSegments(double targetDuration) {
         
         const auto& availableVideos = themeVideosCache[selectedTheme];
         if (availableVideos.empty()) {
-            std::cerr << "  Theme '" << selectedTheme << "' has no videos, skipping" << std::endl;
-            selectionState_.exhaustedThemes[verseRange].push_back(selectedTheme);
+            std::cerr << "  Theme '" << selectedTheme << "' has no videos, marking as exhausted" << std::endl;
+            selectionState_.exhaustedThemesPerRange[currentRange->rangeKey].insert(selectedTheme);
             continue;
         }
         
-        // Select a video from this theme (ensuring no repeats until exhausted)
+        // Select a video from this theme
         std::string selectedVideo;
         try {
             selectedVideo = selector.selectVideoFromTheme(
@@ -147,7 +160,13 @@ std::vector<VideoSegment> Manager::collectVideoSegments(double targetDuration) {
             continue;
         }
         
+        // Check if all videos for this theme are exhausted - mark theme as exhausted for this range
+        if (selectionState_.usedVideos[selectedTheme].size() >= availableVideos.size()) {
+            selectionState_.exhaustedThemesPerRange[currentRange->rangeKey].insert(selectedTheme);
+        }
+        
         std::cout << "  Segment " << segmentCount 
+                  << " [" << currentRange->rangeKey << "]"
                   << " - theme: " << selectedTheme 
                   << ", video: " << fs::path(selectedVideo).filename().string();
         
@@ -180,23 +199,6 @@ std::vector<VideoSegment> Manager::collectVideoSegments(double targetDuration) {
         segments.push_back(segment);
         
         totalDuration += videoDuration;
-        
-        // Check if we've exhausted all videos across all themes
-        bool allVideosUsed = true;
-        for (const auto& theme : availableThemes) {
-            const auto& videos = themeVideosCache[theme];
-            if (selectionState_.usedVideos[theme].size() < videos.size()) {
-                allVideosUsed = false;
-                break;
-            }
-        }
-        
-        // If all videos have been used once and we still need more duration, reset
-        if (allVideosUsed && totalDuration < targetDuration) {
-            std::cout << "  All unique videos exhausted, resetting selection state..." << std::endl;
-            selectionState_.usedVideos.clear();
-            selectionState_.exhaustedThemes.clear();
-        }
         
         // Safety limit to prevent infinite loops
         if (segmentCount > 200) {
@@ -242,11 +244,10 @@ std::string Manager::stitchVideos(const std::vector<VideoSegment>& segments) {
         // Force consistent color metadata to prevent filter graph reconfiguration
         cmd << "-colorspace bt709 -color_primaries bt709 -color_trc bt709 ";
         // Map video from source (input 0), audio from silent source (input 1)
-        // This ensures all segments have audio and discards any original audio
         cmd << "-map 0:v:0 -map 1:a:0 -shortest ";
         cmd << "-c:a aac -ar 48000 -ac 2 -b:a 128k ";
-        cmd << "-fps_mode cfr ";  // Use fps_mode instead of deprecated vsync
-        cmd << "-video_track_timescale 90000 ";  // Consistent timescale
+        cmd << "-fps_mode cfr ";
+        cmd << "-video_track_timescale 90000 ";
         cmd << "-movflags +faststart ";
         cmd << "\"" << normalizedPath.string() << "\" 2>&1";
         
@@ -288,8 +289,7 @@ std::string Manager::stitchVideos(const std::vector<VideoSegment>& segments) {
     fs::path outputPath = tempDir_ / "background_stitched.mp4";
     tempFiles_.push_back(outputPath);
     
-    // Build ffmpeg command - use copy since everything is normalized identically
-    // Add fflags +genpts to regenerate timestamps and avoid DTS issues
+    // Build ffmpeg command
     std::ostringstream cmd;
     cmd << "ffmpeg -y -fflags +genpts -f concat -safe 0 -i \"" << concatFile.string() << "\" ";
     cmd << "-c copy ";
