@@ -1,6 +1,7 @@
 #include "video_selector.h"
 #include <fstream>
 #include <sstream>
+#include <iostream>
 #include <algorithm>
 #include <stdexcept>
 
@@ -96,23 +97,29 @@ std::string Selector::selectTheme(const std::vector<std::string>& themes,
         throw std::runtime_error("No themes available for selection");
     }
     
-    // Filter out exhausted themes for this verse range
-    std::vector<std::string> available;
-    const auto& exhausted = state.exhaustedThemes[verseRange];
+    // Get list of exhausted themes for this verse range
+    auto& exhausted = state.exhaustedThemes[verseRange];
     
+    // Filter out exhausted themes
+    std::vector<std::string> available;
     for (const auto& theme : themes) {
-        if (std::find(exhausted.begin(), exhausted.end(), theme) == exhausted.end()) {
+        bool isExhausted = std::find(exhausted.begin(), exhausted.end(), theme) != exhausted.end();
+        if (!isExhausted) {
             available.push_back(theme);
         }
     }
     
-    // If all themes exhausted, reset
+    // If all themes exhausted, reset the exhausted list
     if (available.empty()) {
-        state.exhaustedThemes[verseRange].clear();
+        std::cout << "    All themes exhausted, resetting theme selection..." << std::endl;
+        exhausted.clear();
         available = themes;
     }
     
-    return random.choice(available);
+    // Select randomly from available themes
+    std::string selected = random.choice(available);
+    
+    return selected;
 }
 
 std::string Selector::selectVideoFromTheme(const std::string& theme,
@@ -125,24 +132,32 @@ std::string Selector::selectVideoFromTheme(const std::string& theme,
     auto& used = state.usedVideos[theme];
     std::vector<std::string> unused;
     
+    // Find unused videos
     for (const auto& video : availableVideos) {
         if (used.find(video) == used.end()) {
             unused.push_back(video);
         }
     }
     
-    // If all videos used, reset
+    // If all videos used, reset for this theme
     if (unused.empty()) {
+        std::cout << "    All videos in theme '" << theme << "' used, resetting..." << std::endl;
         used.clear();
         unused = availableVideos;
     }
     
+    // Select randomly from unused videos
     std::string selected = random.choice(unused);
     used.insert(selected);
     
-    // If we've now used all videos, mark theme as exhausted
+    // Check if theme is now exhausted
     if (used.size() == availableVideos.size()) {
-        // Theme is exhausted for this selection cycle
+        // Find the verse range in exhaustedThemes and add this theme
+        for (auto& [range, exhaustedList] : state.exhaustedThemes) {
+            if (std::find(exhaustedList.begin(), exhaustedList.end(), theme) == exhaustedList.end()) {
+                // Don't add yet - let it be added when we try to select it again
+            }
+        }
     }
     
     return selected;
