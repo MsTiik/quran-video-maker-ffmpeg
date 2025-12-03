@@ -86,6 +86,7 @@
     "r2SecretKey": "${R2_SECRET_KEY}",
     "r2Bucket": "quran-background-videos",
     "themeMetadataPath": "metadata/surah-themes.json",
-    "usePublicBucket": true
+    "usePublicBucket": true,
+    "cacheDirectory": "~/.cache/qvm/backgrounds"
   }
 }

@@ -3,7 +3,7 @@
 #include <filesystem>
 #include <vector>
 #include "cxxopts.hpp"
-
+#include "video_standardizer.h"
 #include "types.h"
 #include "LiveApiClient.h"
 #include "video_generator.h"
@@ -57,10 +57,33 @@ int main(int argc, char* argv[]) {
         ("r2-access-key", "R2 access key (for private buckets)", cxxopts::value<std::string>())
         ("r2-secret-key", "R2 secret key (for private buckets)", cxxopts::value<std::string>())
         ("r2-bucket", "R2 bucket name", cxxopts::value<std::string>()->default_value("quran-background-videos"))
+        ("standardize-local", "Standardize all videos in a local directory", cxxopts::value<std::string>())
+        ("standardize-r2", "Standardize videos in R2 bucket (requires credentials)", cxxopts::value<std::string>())
         ("h,help", "Print usage");
     
     cli_parser.parse_positional({"surah", "from", "to"});
     auto result = cli_parser.parse(argc, argv);
+
+    // Handle standardization
+    if (result.count("standardize-local")) {
+        try {
+            VideoStandardizer::standardizeDirectory(result["standardize-local"].as<std::string>(), false);
+        } catch (const std::exception& e) {
+            std::cerr << "Standardization failed: " << e.what() << std::endl;
+            return 1;
+        }
+        return 0;
+    }
+
+    if (result.count("standardize-r2")) {
+        try {
+            VideoStandardizer::standardizeDirectory(result["standardize-r2"].as<std::string>(), true);
+        } catch (const std::exception& e) {
+            std::cerr << "Standardization failed: " << e.what() << std::endl;
+            return 1;
+        }
+        return 0;
+    }
 
     if (result.count("generate-backend-metadata")) {
         if (!result.count("output")) {

@@ -6,6 +6,7 @@
 #include <sstream>
 #include <algorithm>
 #include <cmath>
+#include "cache_utils.h"
 
 extern "C" {
 #include <libavformat/avformat.h>
@@ -365,6 +366,162 @@ std::string Manager::prepareBackgroundVideo(double totalDurationSeconds) {
         std::cerr << "Warning: Dynamic background selection failed: " << e.what() 
                  << ", using default background" << std::endl;
         return config_.assetBgVideo;
+    }
+}
+
+std::string Manager::getCachedVideoPath(const std::string& remoteKey) {
+    // Use the same cache directory as audio
+    cacheDir_ = CacheUtils::getCacheRoot() / "backgrounds";
+    fs::create_directories(cacheDir_);
+    
+    // Convert remote key to safe filename
+    std::string safeFilename = remoteKey;
+    std::replace(safeFilename.begin(), safeFilename.end(), '/', '_');
+    return (cacheDir_ / safeFilename).string();
+}
+
+bool Manager::isVideoCached(const std::string& remoteKey) {
+    std::string cachedPath = getCachedVideoPath(remoteKey);
+    return fs::exists(cachedPath) && fs::file_size(cachedPath) > 0;
+}
+
+void Manager::cacheVideo(const std::string& remoteKey, const std::string& localPath) {
+    std::string cachePath = getCachedVideoPath(remoteKey);
+    if (localPath != cachePath) {
+        fs::copy_file(localPath, cachePath, fs::copy_options::overwrite_existing);
+    }
+}
+
+std::string Manager::buildFilterComplex(double totalDurationSeconds, 
+                                        std::vector<std::string>& outputInputFiles) {
+    if (!config_.videoSelection.enableDynamicBackgrounds) {
+        return "";  // Use default single input
+    }
+
+    try {
+        std::cout << "Selecting dynamic background videos..." << std::endl;
+        
+        // Initialize components
+        VideoSelector::Selector selector(
+            config_.videoSelection.themeMetadataPath,
+            config_.videoSelection.seed
+        );
+        
+        R2::R2Config r2Config{
+            config_.videoSelection.r2Endpoint,
+            config_.videoSelection.r2AccessKey,
+            config_.videoSelection.r2SecretKey,
+            config_.videoSelection.r2Bucket,
+            config_.videoSelection.usePublicBucket
+        };
+        R2::Client r2Client(r2Config);
+        
+        // Get verse range segments
+        auto verseRangeSegments = selector.getVerseRangeSegments(
+            options_.surah, options_.from, options_.to
+        );
+        
+        // Collect themes and cache videos
+        std::set<std::string> allThemes;
+        for (const auto& seg : verseRangeSegments) {
+            allThemes.insert(seg.themes.begin(), seg.themes.end());
+        }
+        
+        std::map<std::string, std::vector<std::string>> themeVideosCache;
+        for (const auto& theme : allThemes) {
+            try {
+                themeVideosCache[theme] = r2Client.listVideosInTheme(theme);
+            } catch (...) {
+                themeVideosCache[theme] = {};
+            }
+        }
+        
+        // Build playlists
+        for (const auto& seg : verseRangeSegments) {
+            selector.getOrBuildPlaylist(seg, themeVideosCache, selectionState_);
+        }
+        
+        // Collect video segments
+        std::vector<VideoSegment> segments;
+        double currentTime = 0.0;
+        int segmentCount = 0;
+        
+        while (currentTime < totalDurationSeconds && segmentCount < 100) {
+            segmentCount++;
+            double timeFraction = currentTime / totalDurationSeconds;
+            
+            const auto* range = selector.getRangeForTimePosition(verseRangeSegments, timeFraction);
+            if (!range) break;
+            
+            auto entry = selector.getNextVideoForRange(range->rangeKey, selectionState_);
+            
+            // Check cache first
+            std::string localPath;
+            if (isVideoCached(entry.videoKey)) {
+                localPath = getCachedVideoPath(entry.videoKey);
+                std::cout << "  Using cached: " << fs::path(entry.videoKey).filename() << std::endl;
+            } else {
+                // Download to temp then cache
+                fs::path tempPath = tempDir_ / fs::path(entry.videoKey).filename();
+                try {
+                    localPath = r2Client.downloadVideo(entry.videoKey, tempPath);
+                    cacheVideo(entry.videoKey, localPath);
+                    tempFiles_.push_back(tempPath);
+                } catch (const std::exception& e) {
+                    std::cerr << "  Download failed: " << e.what() << std::endl;
+                    continue;
+                }
+            }
+            
+            double duration = getVideoDuration(localPath);
+            if (duration <= 0) continue;
+            
+            VideoSegment segment;
+            segment.path = localPath;
+            segment.theme = entry.theme;
+            segment.duration = duration;
+            segment.trimmedDuration = std::min(duration, totalDurationSeconds - currentTime);
+            segment.needsTrim = (segment.trimmedDuration < segment.duration);
+            
+            segments.push_back(segment);
+            outputInputFiles.push_back(localPath);
+            currentTime += segment.trimmedDuration;
+        }
+        
+        if (segments.empty()) {
+            std::cerr << "Warning: No video segments collected" << std::endl;
+            return "";
+        }
+        
+        // Build concat filter
+        std::ostringstream filter;
+        
+        // First, scale all inputs to same size
+        for (size_t i = 0; i < segments.size(); ++i) {
+            filter << "[" << i << ":v]";
+            
+            // Trim if needed
+            if (segments[i].needsTrim) {
+                filter << "trim=duration=" << segments[i].trimmedDuration << ",setpts=PTS-STARTPTS,";
+            }
+            
+            filter << "scale=" << config_.width << ":" << config_.height 
+                   << ",setsar=1[v" << i << "]; ";
+        }
+        
+        // Then concat them
+        for (size_t i = 0; i < segments.size(); ++i) {
+            filter << "[v" << i << "]";
+        }
+        filter << "concat=n=" << segments.size() << ":v=1:a=0[bg]; ";
+        filter << "[bg]setpts=PTS-STARTPTS";
+        
+        std::cout << "  Selected " << segments.size() << " video segments" << std::endl;
+        return filter.str();
+        
+    } catch (const std::exception& e) {
+        std::cerr << "Warning: Dynamic background selection failed: " << e.what() << std::endl;
+        return "";
     }
 }
 

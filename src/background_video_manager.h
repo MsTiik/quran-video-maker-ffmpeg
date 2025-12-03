@@ -11,7 +11,7 @@ struct VideoSegment {
     std::string path;
     std::string theme;
     double duration;
-    double trimmedDuration;  // Duration after trimming (if trimmed)
+    double trimmedDuration;
     bool isLocal;
     bool needsTrim;
 };
@@ -20,27 +20,27 @@ class Manager {
 public:
     explicit Manager(const AppConfig& config, const CLIOptions& options);
     
-    // Select and prepare background video(s) for the given verse range and total duration
     std::string prepareBackgroundVideo(double totalDurationSeconds);
-    
-    // Cleanup temporary files
+    std::string buildFilterComplex(double totalDurationSeconds, 
+                                   std::vector<std::string>& outputInputFiles);
     void cleanup();
 
 private:
     const AppConfig& config_;
     const CLIOptions& options_;
     std::filesystem::path tempDir_;
+    std::filesystem::path cacheDir_;
     std::vector<std::filesystem::path> tempFiles_;
     VideoSelector::SelectionState selectionState_;
     
-    // Download and collect video segments until we meet the duration
     std::vector<VideoSegment> collectVideoSegments(double targetDuration);
-    
-    // Stitch multiple videos together using ffmpeg
     std::string stitchVideos(const std::vector<VideoSegment>& segments);
-    
-    // Get video duration using libav
     double getVideoDuration(const std::string& path);
+    
+    // Cache management methods
+    std::string getCachedVideoPath(const std::string& remoteKey);
+    bool isVideoCached(const std::string& remoteKey);
+    void cacheVideo(const std::string& remoteKey, const std::string& localPath);
 };
 
 } // namespace BackgroundVideo

@@ -119,6 +119,7 @@ add_library(qvm_lib STATIC
     src/background_video_manager.cpp src/background_video_manager.h
     src/r2_client.cpp src/r2_client.h
     src/video_selector.cpp src/video_selector.h
+    src/video_standardizer.cpp src/video_standardizer.h
 )
 
 add_executable(qvm src/main.cpp)
