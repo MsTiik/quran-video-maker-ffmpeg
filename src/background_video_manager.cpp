@@ -79,6 +79,32 @@ std::vector<VideoSegment> Manager::collectVideoSegments(double targetDuration) {
     // Keep track of available videos per theme
     std::map<std::string, std::vector<std::string>> themeVideosCache;
     
+    // Pre-fetch all available videos for all themes
+    for (const auto& theme : availableThemes) {
+        try {
+            themeVideosCache[theme] = r2Client.listVideosInTheme(theme);
+            if (themeVideosCache[theme].empty()) {
+                std::cout << "  Warning: No videos found for theme '" << theme << "'" << std::endl;
+            }
+        } catch (const std::exception& e) {
+            std::cerr << "  Error listing videos for theme '" << theme << "': " << e.what() << std::endl;
+        }
+    }
+    
+    // Remove themes with no videos
+    auto it = availableThemes.begin();
+    while (it != availableThemes.end()) {
+        if (themeVideosCache[*it].empty()) {
+            it = availableThemes.erase(it);
+        } else {
+            ++it;
+        }
+    }
+    
+    if (availableThemes.empty()) {
+        throw std::runtime_error("No themes with available videos found");
+    }
+    
     // Collect segments until we meet or exceed the target duration
     int segmentCount = 0;
     std::string verseRange = std::to_string(options_.surah) + ":" + 
@@ -89,40 +115,52 @@ std::vector<VideoSegment> Manager::collectVideoSegments(double targetDuration) {
         segmentCount++;
         
         // Select a theme (ensuring no repeats until exhausted)
-        std::string selectedTheme = selector.selectTheme(
-            availableThemes, 
-            verseRange, 
-            selectionState_
-        );
-        
-        std::cout << "  Segment " << segmentCount << " - theme: " << selectedTheme;
-        
-        // Get available videos for this theme (cached)
-        if (themeVideosCache.find(selectedTheme) == themeVideosCache.end()) {
-            themeVideosCache[selectedTheme] = r2Client.listVideosInTheme(selectedTheme);
-            if (themeVideosCache[selectedTheme].empty()) {
-                std::cerr << " (no videos found, skipping)" << std::endl;
-                // Mark this theme as exhausted so we don't try it again
-                selectionState_.exhaustedThemes[verseRange].push_back(selectedTheme);
-                continue;
-            }
+        std::string selectedTheme;
+        try {
+            selectedTheme = selector.selectTheme(
+                availableThemes, 
+                verseRange, 
+                selectionState_
+            );
+        } catch (const std::exception& e) {
+            std::cerr << "  Error selecting theme: " << e.what() << std::endl;
+            break;
         }
         
         const auto& availableVideos = themeVideosCache[selectedTheme];
+        if (availableVideos.empty()) {
+            std::cerr << "  Theme '" << selectedTheme << "' has no videos, skipping" << std::endl;
+            selectionState_.exhaustedThemes[verseRange].push_back(selectedTheme);
+            continue;
+        }
         
         // Select a video from this theme (ensuring no repeats until exhausted)
-        std::string selectedVideo = selector.selectVideoFromTheme(
-            selectedTheme,
-            availableVideos,
-            selectionState_
-        );
+        std::string selectedVideo;
+        try {
+            selectedVideo = selector.selectVideoFromTheme(
+                selectedTheme,
+                availableVideos,
+                selectionState_
+            );
+        } catch (const std::exception& e) {
+            std::cerr << "  Error selecting video: " << e.what() << std::endl;
+            continue;
+        }
         
-        std::cout << ", video: " << fs::path(selectedVideo).filename();
+        std::cout << "  Segment " << segmentCount 
+                  << " - theme: " << selectedTheme 
+                  << ", video: " << fs::path(selectedVideo).filename().string();
         
         // Download the video
         fs::path localPath = tempDir_ / (std::to_string(segmentCount) + "_" + fs::path(selectedVideo).filename().string());
-        std::string downloadedPath = r2Client.downloadVideo(selectedVideo, localPath);
-        tempFiles_.push_back(localPath);
+        std::string downloadedPath;
+        try {
+            downloadedPath = r2Client.downloadVideo(selectedVideo, localPath);
+            tempFiles_.push_back(localPath);
+        } catch (const std::exception& e) {
+            std::cerr << " (download failed: " << e.what() << ")" << std::endl;
+            continue;
+        }
         
         // Get video duration
         double videoDuration = getVideoDuration(downloadedPath);
@@ -143,26 +181,25 @@ std::vector<VideoSegment> Manager::collectVideoSegments(double targetDuration) {
         
         totalDuration += videoDuration;
         
-        // Check if all themes and videos are exhausted
-        bool allExhausted = true;
+        // Check if we've exhausted all videos across all themes
+        bool allVideosUsed = true;
         for (const auto& theme : availableThemes) {
-            if (themeVideosCache.find(theme) != themeVideosCache.end()) {
-                const auto& videos = themeVideosCache[theme];
-                if (!videos.empty() && selectionState_.usedVideos[theme].size() < videos.size()) {
-                    allExhausted = false;
-                    break;
-                }
+            const auto& videos = themeVideosCache[theme];
+            if (selectionState_.usedVideos[theme].size() < videos.size()) {
+                allVideosUsed = false;
+                break;
             }
         }
         
-        if (allExhausted && totalDuration < targetDuration) {
+        // If all videos have been used once and we still need more duration, reset
+        if (allVideosUsed && totalDuration < targetDuration) {
             std::cout << "  All unique videos exhausted, resetting selection state..." << std::endl;
             selectionState_.usedVideos.clear();
-            selectionState_.exhaustedThemes[verseRange].clear();
+            selectionState_.exhaustedThemes.clear();
         }
         
         // Safety limit to prevent infinite loops
-        if (segmentCount > 100) {
+        if (segmentCount > 200) {
             std::cerr << "  Warning: Reached segment limit, stopping collection" << std::endl;
             break;
         }
@@ -186,6 +223,40 @@ std::string Manager::stitchVideos(const std::vector<VideoSegment>& segments) {
     }
     
     std::cout << "  Stitching " << segments.size() << " video segments..." << std::endl;
+    std::cout << "  Re-encoding segments to ensure compatibility..." << std::endl;
+    
+    // First pass: re-encode all segments to ensure they have compatible parameters
+    std::vector<std::string> normalizedSegments;
+    for (size_t i = 0; i < segments.size(); ++i) {
+        fs::path normalizedPath = tempDir_ / ("normalized_" + std::to_string(i) + ".mp4");
+        tempFiles_.push_back(normalizedPath);
+        
+        std::ostringstream cmd;
+        cmd << "ffmpeg -y -i \"" << segments[i].path << "\" ";
+        cmd << "-c:v libx264 -preset ultrafast -crf 23 ";
+        cmd << "-r " << config_.fps << " ";  // Force consistent frame rate
+        cmd << "-s " << config_.width << "x" << config_.height << " ";  // Force consistent resolution
+        cmd << "-pix_fmt yuv420p ";
+        cmd << "-c:a aac -ar 48000 -ac 2 -b:a 128k ";  // Normalize audio
+        cmd << "-vsync cfr ";  // Force constant frame rate
+        cmd << "-video_track_timescale 90000 ";  // Consistent timescale
+        cmd << "-movflags +faststart ";
+        cmd << "\"" << normalizedPath.string() << "\" 2>&1";
+        
+        int result = std::system(cmd.str().c_str());
+        if (result != 0 || !fs::exists(normalizedPath)) {
+            std::cerr << "  Warning: Failed to normalize segment " << i << ", skipping" << std::endl;
+            continue;
+        }
+        
+        normalizedSegments.push_back(normalizedPath.string());
+    }
+    
+    if (normalizedSegments.empty()) {
+        throw std::runtime_error("Failed to normalize any video segments");
+    }
+    
+    std::cout << "  Successfully normalized " << normalizedSegments.size() << " segments" << std::endl;
     
     // Create concat demuxer file
     fs::path concatFile = tempDir_ / "concat.txt";
@@ -194,8 +265,8 @@ std::string Manager::stitchVideos(const std::vector<VideoSegment>& segments) {
         throw std::runtime_error("Failed to create concat file");
     }
     
-    for (const auto& segment : segments) {
-        concat << "file '" << fs::absolute(segment.path).string() << "'\n";
+    for (const auto& segment : normalizedSegments) {
+        concat << "file '" << fs::absolute(segment).string() << "'\n";
     }
     concat.close();
     
@@ -203,14 +274,14 @@ std::string Manager::stitchVideos(const std::vector<VideoSegment>& segments) {
     fs::path outputPath = tempDir_ / "background_stitched.mp4";
     tempFiles_.push_back(outputPath);
     
-    // Build ffmpeg command
+    // Build ffmpeg command - now we can safely use copy since everything is normalized
     std::ostringstream cmd;
     cmd << "ffmpeg -y -f concat -safe 0 -i \"" << concatFile.string() << "\" ";
-    cmd << "-c copy ";  // Copy codecs for speed
+    cmd << "-c copy ";  // Copy codecs (safe now since everything is normalized)
     cmd << "-movflags +faststart ";
-    cmd << "\"" << outputPath.string() << "\"";
+    cmd << "\"" << outputPath.string() << "\" 2>&1";
     
-    std::cout << "  Running: " << cmd.str() << std::endl;
+    std::cout << "  Concatenating normalized segments..." << std::endl;
     
     // Execute ffmpeg
     int result = std::system(cmd.str().c_str());

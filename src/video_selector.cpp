@@ -1,9 +1,9 @@
 #include "video_selector.h"
 #include <fstream>
 #include <sstream>
-#include <iostream>
 #include <algorithm>
 #include <stdexcept>
+#include <iostream>
 
 using json = nlohmann::json;
 
