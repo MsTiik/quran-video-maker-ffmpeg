@@ -86,7 +86,7 @@
     "useLocalDirectory": false,
     "localVideoDirectory": "/path/to/local/videos",
     
-    "_comment_r2": "For R2 usage",
+    "_comment_r2": "For R2 usage (can use environment variables)",
     "r2Endpoint": "${R2_ENDPOINT}",
     "r2AccessKey": "${R2_ACCESS_KEY}",
     "r2SecretKey": "${R2_SECRET_KEY}",

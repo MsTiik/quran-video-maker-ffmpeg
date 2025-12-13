@@ -274,8 +274,9 @@ jobs:
         WIN_ZIP=$(find artifacts/windows -name "qvm-*-win64.zip" -printf "%f\n" | head -n1)
         cp scoop/qvm.json scoop-qvm.json
         sed -i.bak \
-          -e "s/0.0.0/${VER_NO_V}/" \
+          -e "s/0.0.0/${VER_NO_V}/g" \
           -e "s|qvm-0.0.0-dev-win64.zip|${WIN_ZIP}|" \
+          -e "s|qvm-0.0.0-win64|qvm-${VER_NO_V}-win64|" \
           -e "s/REPLACE_WITH_SHA256_OF_qvm-bin-windows.zip/${{ steps.winsha.outputs.win_sha }}/" \
           scoop-qvm.json
         rm scoop-qvm.json.bak
