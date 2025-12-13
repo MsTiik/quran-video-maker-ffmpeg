@@ -250,6 +250,7 @@ The `start` and `end` times are absolute positions in the audio file (in seconds
     }
   ]
 }
+```
 
 ### Dynamic Background Videos
 The tool supports dynamic background video selection based on verse themes. Videos are automatically selected and concatenated during rendering without pre-stitching.
