@@ -20,8 +20,8 @@
   },
   "translationFont": {
     "family": "Metropolis",
-    "file": "fonts/metropolis-latin-400-normal.ttf",
-    "size": 50,
+    "file": "fonts/metropolis-latin-600-normal.ttf",
+    "size": 35,
     "color": "D3D3D3"
   },
 
