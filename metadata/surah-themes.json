@@ -2,6 +2,11 @@
   "_comment": "Maps surah verse ranges to video themes for dynamic background selection",
   "_format": "surah_number: { verse_range: [theme1, theme2, ...] }",
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+=======
+  "_example": "19: { '1-15': ['prayer', 'light'] } means verses 1-15 of Surah Maryam use 'prayer' and 'light' themed videos",
+  "_note": "Add videos to ~/Desktop/quran-videos/bg-videos/<theme_name>/ folders",
+>>>>>>> Stashed changes
 =======
   "_example": "19: { '1-15': ['prayer', 'light'] } means verses 1-15 of Surah Maryam use 'prayer' and 'light' themed videos",
   "_note": "Add videos to ~/Desktop/quran-videos/bg-videos/<theme_name>/ folders",
@@ -10,6 +15,7 @@
   "1": {
     "_name": "Al-Fatiha - The Opening",
     "1-7": ["prayer", "light", "guidance", "peace"]
+<<<<<<< Updated upstream
   },
 <<<<<<< Updated upstream
   "2": {
@@ -83,12 +89,17 @@
   "18": {
     "1-30": ["cave", "companions"],
     "31-110": ["guidance", "trial"]
+=======
+>>>>>>> Stashed changes
   },
-  "19": {
-    "1-15": ["dua", "newlife", "mihrab"],
-    "16-33": ["maryam", "birth", "miracle"],
-    "34-40": ["truth", "debate", "prophethood"]
+
+  "36": {
+    "_name": "Ya-Sin",
+    "1-27": ["light", "wisdom", "book"],
+    "28-50": ["creation", "sky", "stars"],
+    "51-83": ["gardens", "peace", "light"]
   },
+<<<<<<< Updated upstream
   "20": {
     "1-50": ["moses", "dialogue"],
     "51-135": ["leadership", "trust", "signs"]
@@ -484,6 +495,38 @@
   },
 
   "112": {
+=======
+
+  "55": {
+    "_name": "Ar-Rahman - The Most Merciful",
+    "1-30": ["creation", "sky", "ocean"],
+    "31-45": ["gardens", "nature", "peace"],
+    "46-78": ["gardens", "reflection", "light"]
+  },
+
+  "67": {
+    "_name": "Al-Mulk - The Sovereignty",
+    "1-19": ["sky", "stars", "creation", "night"],
+    "20-30": ["wisdom", "reflection", "light"]
+  },
+
+  "91": {
+    "_name": "Ash-Shams - The Sun",
+    "1-15": ["sunrise", "light", "sky", "nature"]
+  },
+
+  "92": {
+    "_name": "Al-Layl - The Night",
+    "1-21": ["night", "stars", "reflection"]
+  },
+
+  "93": {
+    "_name": "Ad-Duha - The Morning Hours",
+    "1-11": ["sunrise", "light", "peace"]
+  },
+
+  "112": {
+>>>>>>> Stashed changes
     "_name": "Al-Ikhlas - The Sincerity",
     "1-4": ["light", "peace", "creation"]
   },
@@ -496,6 +539,9 @@
   "114": {
     "_name": "An-Nas - Mankind",
     "1-6": ["peace", "light", "reflection"]
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
   }
 }
