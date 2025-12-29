@@ -15,17 +15,21 @@
   "arabicFont": {
     "family": "KFGQPC HAFS Uthmanic Script",
     "file": "fonts/UthmanicHafs_V22.ttf",
+<<<<<<< Updated upstream
     "size": 80,
+=======
+    "size": 125,
+>>>>>>> Stashed changes
     "color": "FFFFFF"
   },
   "translationFont": {
-    "family": "American Captain",
-    "file": "fonts/American Captain.ttf",
+    "family": "Metropolis",
+    "file": "fonts/metropolis-latin-400-normal.ttf",
     "size": 50,
     "color": "D3D3D3"
   },
-  
-  "translationFallbackFontFamily": "American Captain",
+
+  "translationFallbackFontFamily": "Metropolis",
   
   "_comment_visual": "Visual styling",
   "overlayColor": "0x000000@0.0",
@@ -53,10 +57,14 @@
   
   "_comment_wrapping": "Text wrapping parameters",
   "textWrapThreshold": 20,
+<<<<<<< Updated upstream
   "arabicMaxWidthFraction": 1.25,
+=======
+  "arabicMaxWidthFraction": 0.98,
+>>>>>>> Stashed changes
   "translationMaxWidthFraction": 0.85,
-  "textHorizontalPadding": 0.05,
-  "textVerticalPadding": 0.08,
+  "textHorizontalPadding": 0.03,
+  "textVerticalPadding": 0.06,
   
   "_comment_layout": "Layout parameters",
   "verticalShift": 40.0,
