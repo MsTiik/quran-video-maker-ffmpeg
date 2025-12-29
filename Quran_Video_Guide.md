@@ -18,13 +18,13 @@ Let's create a simple video of Surah Al-Fatiha (the opening chapter):
 
 ```bash
 cd ~/Documents/Quran_Video_test/quran-video-maker-ffmpeg
-./build/qvm 1 1 7 --output ~/Desktop/my-first-quran-video.mp4 --aspect-ratio 9:16
+./build/qvm 1 1 7 --output ~/Desktop/my-first-quran-video.mp4 --width 720 --height 1280
 ```
 
 **What this does:**
 - `1 1 7` means: Surah 1, verses 1 through 7 (Al-Fatiha - The Opening)
 - `--output ~/Desktop/my-first-quran-video.mp4` saves the video to your Desktop
-- `--aspect-ratio 9:16` makes it perfect for Instagram Reels
+- `--width 720 --height 1280` makes it 9:16 vertical format, perfect for Instagram Reels
 
 Press Enter and wait 10-30 seconds. Your video will appear on the Desktop!
 
@@ -49,7 +49,7 @@ Here are real examples showing how different options create different videos:
 ### Basic Video (No Background Videos)
 ```bash
 cd ~/Documents/Quran_Video_test/quran-video-maker-ffmpeg
-./build/qvm 67 1 5 --output ~/Desktop/surah67-basic.mp4 --aspect-ratio 9:16
+./build/qvm 67 1 5 --output ~/Desktop/surah67-basic.mp4 --width 720 --height 1280
 ```
 **Result:** Simple video with just Arabic text, English translation, and a static starry background.
 
@@ -57,7 +57,7 @@ cd ~/Documents/Quran_Video_test/quran-video-maker-ffmpeg
 
 ### With Dynamic Themed Backgrounds
 ```bash
-./build/qvm 67 1 5 --output ~/Desktop/surah67-dynamic.mp4 --aspect-ratio 9:16 --enable-dynamic-bg --local-video-dir ~/Desktop/bg_videos
+./build/qvm 67 1 5 --output ~/Desktop/surah67-dynamic.mp4 --width 720 --height 1280 --enable-dynamic-bg --local-video-dir ~/Desktop/bg_videos
 ```
 **Result:** Same verses, but now the tool automatically picks videos from your theme folders based on the surah's meaning. For Surah Al-Mulk (67), it uses videos from `sky`, `stars`, `creation`, and `night` themes.
 
@@ -67,7 +67,7 @@ cd ~/Documents/Quran_Video_test/quran-video-maker-ffmpeg
 
 ### Different Reciter
 ```bash
-./build/qvm 36 1 12 --reciter 19 --output ~/Desktop/yaseen-mishari.mp4 --aspect-ratio 9:16 --enable-dynamic-bg --local-video-dir ~/Desktop/bg_videos
+./build/qvm 36 1 12 --reciter 19 --output ~/Desktop/yaseen-mishari.mp4 --width 720 --height 1280 --enable-dynamic-bg --local-video-dir ~/Desktop/bg_videos
 ```
 **Result:** Surah Ya-Sin (36) with Mishari Rashid al-Afasy's recitation instead of the default. Each reciter has a unique style and voice.
 
@@ -75,11 +75,11 @@ cd ~/Documents/Quran_Video_test/quran-video-maker-ffmpeg
 
 ### Getting Different Background Videos (The Variety Solution!)
 ```bash
-./build/qvm 93 1 11 --seed 1 --output ~/Desktop/duha-v1.mp4 --aspect-ratio 9:16 --enable-dynamic-bg --local-video-dir ~/Desktop/bg_videos
+./build/qvm 93 1 11 --seed 1 --output ~/Desktop/duha-v1.mp4 --width 720 --height 1280 --enable-dynamic-bg --local-video-dir ~/Desktop/bg_videos
 
-./build/qvm 93 1 11 --seed 2 --output ~/Desktop/duha-v2.mp4 --aspect-ratio 9:16 --enable-dynamic-bg --local-video-dir ~/Desktop/bg_videos
+./build/qvm 93 1 11 --seed 2 --output ~/Desktop/duha-v2.mp4 --width 720 --height 1280 --enable-dynamic-bg --local-video-dir ~/Desktop/bg_videos
 
-./build/qvm 93 1 11 --seed 3 --output ~/Desktop/duha-v3.mp4 --aspect-ratio 9:16 --enable-dynamic-bg --local-video-dir ~/Desktop/bg_videos
+./build/qvm 93 1 11 --seed 3 --output ~/Desktop/duha-v3.mp4 --width 720 --height 1280 --enable-dynamic-bg --local-video-dir ~/Desktop/bg_videos
 ```
 **Result:** Three different videos of the same verses! The `--seed` number controls which videos get picked from your theme folders.
 
@@ -89,7 +89,7 @@ cd ~/Documents/Quran_Video_test/quran-video-maker-ffmpeg
 
 ### Fast Preview (Lower Quality, Faster Rendering)
 ```bash
-./build/qvm 55 1 10 --quality-profile speed --output ~/Desktop/rahman-preview.mp4 --aspect-ratio 9:16 --enable-dynamic-bg --local-video-dir ~/Desktop/bg_videos
+./build/qvm 55 1 10 --quality-profile speed --output ~/Desktop/rahman-preview.mp4 --width 720 --height 1280 --enable-dynamic-bg --local-video-dir ~/Desktop/bg_videos
 ```
 **Result:** Renders in about half the time, but slightly lower quality. Great for testing before making the final version.
 
@@ -97,7 +97,7 @@ cd ~/Documents/Quran_Video_test/quran-video-maker-ffmpeg
 
 ### High Quality (Best for Final Posts)
 ```bash
-./build/qvm 55 1 10 --quality-profile max --output ~/Desktop/rahman-final.mp4 --aspect-ratio 9:16 --enable-dynamic-bg --local-video-dir ~/Desktop/bg_videos
+./build/qvm 55 1 10 --quality-profile max --output ~/Desktop/rahman-final.mp4 --width 720 --height 1280 --enable-dynamic-bg --local-video-dir ~/Desktop/bg_videos
 ```
 **Result:** Takes longer to render but produces the highest quality. Use this for your final Instagram posts.
 
@@ -120,7 +120,7 @@ Add `--reciter [NUMBER]` to any command. Here are the most popular reciters:
 
 **Example:**
 ```bash
-./build/qvm 18 1 10 --reciter 21 --output ~/Desktop/kahf-basit.mp4 --aspect-ratio 9:16
+./build/qvm 18 1 10 --reciter 21 --output ~/Desktop/kahf-basit.mp4 --width 720 --height 1280
 ```
 
 *See Section 5 for the complete list of all 27 available reciters.*
@@ -139,7 +139,7 @@ Control render speed and video quality:
 
 **Example:**
 ```bash
-./build/qvm 112 1 4 --quality-profile max --output ~/Desktop/ikhlas-final.mp4 --aspect-ratio 9:16
+./build/qvm 112 1 4 --quality-profile max --output ~/Desktop/ikhlas-final.mp4 --width 720 --height 1280
 ```
 
 ---
@@ -155,9 +155,9 @@ The tool randomly picks videos from your theme folders. The `--seed` number cont
 **Quick tip for variety:**
 ```bash
 # Try 5 different versions and pick your favorite
-./build/qvm 36 1 12 --seed 10 --output ~/Desktop/yaseen-v1.mp4 --aspect-ratio 9:16 --enable-dynamic-bg --local-video-dir ~/Desktop/bg_videos
-./build/qvm 36 1 12 --seed 20 --output ~/Desktop/yaseen-v2.mp4 --aspect-ratio 9:16 --enable-dynamic-bg --local-video-dir ~/Desktop/bg_videos
-./build/qvm 36 1 12 --seed 30 --output ~/Desktop/yaseen-v3.mp4 --aspect-ratio 9:16 --enable-dynamic-bg --local-video-dir ~/Desktop/bg_videos
+./build/qvm 36 1 12 --seed 10 --output ~/Desktop/yaseen-v1.mp4 --width 720 --height 1280 --enable-dynamic-bg --local-video-dir ~/Desktop/bg_videos
+./build/qvm 36 1 12 --seed 20 --output ~/Desktop/yaseen-v2.mp4 --width 720 --height 1280 --enable-dynamic-bg --local-video-dir ~/Desktop/bg_videos
+./build/qvm 36 1 12 --seed 30 --output ~/Desktop/yaseen-v3.mp4 --width 720 --height 1280 --enable-dynamic-bg --local-video-dir ~/Desktop/bg_videos
 ```
 
 **About video length:** If your background videos are very long (over 2-3 minutes), the tool will use fewer clips, giving less variety. Shorter clips (10-30 seconds) = more variety!
@@ -183,7 +183,7 @@ Use `--output` to choose where to save and what to name your video:
 If you just want the simple starry background:
 
 ```bash
-./build/qvm 1 1 7 --output ~/Desktop/simple.mp4 --aspect-ratio 9:16
+./build/qvm 1 1 7 --output ~/Desktop/simple.mp4 --width 720 --height 1280
 ```
 
 Just don't include `--enable-dynamic-bg` or `--local-video-dir` flags!
@@ -335,31 +335,31 @@ Copy-paste these templates and just change the numbers/names:
 **Basic Instagram video:**
 ```bash
 cd ~/Documents/Quran_Video_test/quran-video-maker-ffmpeg
-./build/qvm [SURAH] [START] [END] --output ~/Desktop/[NAME].mp4 --aspect-ratio 9:16
+./build/qvm [SURAH] [START] [END] --output ~/Desktop/[NAME].mp4 --width 720 --height 1280
 ```
 
 **With dynamic backgrounds:**
 ```bash
 cd ~/Documents/Quran_Video_test/quran-video-maker-ffmpeg
-./build/qvm [SURAH] [START] [END] --output ~/Desktop/[NAME].mp4 --aspect-ratio 9:16 --enable-dynamic-bg --local-video-dir ~/Desktop/bg_videos
+./build/qvm [SURAH] [START] [END] --output ~/Desktop/[NAME].mp4 --width 720 --height 1280 --enable-dynamic-bg --local-video-dir ~/Desktop/bg_videos
 ```
 
 **Different reciter + backgrounds:**
 ```bash
 cd ~/Documents/Quran_Video_test/quran-video-maker-ffmpeg
-./build/qvm [SURAH] [START] [END] --reciter [ID] --output ~/Desktop/[NAME].mp4 --aspect-ratio 9:16 --enable-dynamic-bg --local-video-dir ~/Desktop/bg_videos
+./build/qvm [SURAH] [START] [END] --reciter [ID] --output ~/Desktop/[NAME].mp4 --width 720 --height 1280 --enable-dynamic-bg --local-video-dir ~/Desktop/bg_videos
 ```
 
 **Get variety with seed:**
 ```bash
 cd ~/Documents/Quran_Video_test/quran-video-maker-ffmpeg
-./build/qvm [SURAH] [START] [END] --seed [NUMBER] --output ~/Desktop/[NAME].mp4 --aspect-ratio 9:16 --enable-dynamic-bg --local-video-dir ~/Desktop/bg_videos
+./build/qvm [SURAH] [START] [END] --seed [NUMBER] --output ~/Desktop/[NAME].mp4 --width 720 --height 1280 --enable-dynamic-bg --local-video-dir ~/Desktop/bg_videos
 ```
 
 **High quality final version:**
 ```bash
 cd ~/Documents/Quran_Video_test/quran-video-maker-ffmpeg
-./build/qvm [SURAH] [START] [END] --quality-profile max --output ~/Desktop/[NAME].mp4 --aspect-ratio 9:16 --enable-dynamic-bg --local-video-dir ~/Desktop/bg_videos
+./build/qvm [SURAH] [START] [END] --quality-profile max --output ~/Desktop/[NAME].mp4 --width 720 --height 1280 --enable-dynamic-bg --local-video-dir ~/Desktop/bg_videos
 ```
 
 ---
